@@ -28,5 +28,7 @@ void _matchTests() {
     expect(FoodCategory.hotpot.matches(types: ['restaurant'], primaryType: 'restaurant', name: '這一鍋 麻辣鍋'), isTrue);
     expect(FoodCategory.hotpot.matches(types: ['restaurant'], primaryType: 'restaurant', name: '阿明牛肉麵'), isFalse);
     expect(FoodCategory.all.matches(types: const [], primaryType: null, name: 'x'), isTrue);
+    expect(FoodCategory.taiwanese.matches(types: ['restaurant'], primaryType: 'restaurant', name: '阿財熱炒'), isTrue);
+    expect(FoodCategory.taiwanese.searchType, 'any');
   });
 }

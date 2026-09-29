@@ -9,6 +9,7 @@ enum FoodCategory {
   japanese('日式', '🍣', '日式料理',
       ['japanese_restaurant', 'sushi_restaurant', 'ramen_restaurant']),
   korean('韓式', '🥘', '韓式料理', ['korean_restaurant']),
+  taiwanese('台式', '🇹🇼', '台式餐廳', []),
   chinese('中式', '🥟', '中式餐廳', ['chinese_restaurant']),
   snack('小吃', '🍢', '小吃', []),
   noodle('麵食', '🍜', '麵店', []),
@@ -49,6 +50,11 @@ enum FoodCategory {
         FoodCategory.hotpot => const ['火鍋', '鍋物', '涮', '麻辣鍋', '石頭鍋'],
         FoodCategory.japanese => const ['日式', '日本', '壽司', '拉麵', '丼', '居酒屋', '定食', '燒鳥'],
         FoodCategory.korean => const ['韓式', '韓國', '韓'],
+        FoodCategory.taiwanese => const [
+            '台式', '臺式', '台菜', '臺菜', '台灣料理', '熱炒', '快炒', '滷肉飯', '魯肉飯',
+            '牛肉麵', '麵線', '蚵仔', '豬腳', '雞肉飯', '肉圓', '碗粿', '米糕', '排骨飯',
+            '鵝肉', '羊肉爐', '薑母鴨', '土雞城', '客家', '辦桌', '海產店', '小吃部'
+          ],
         FoodCategory.chinese => const ['中式', '餐館', '熱炒', '合菜', '川菜', '粵菜', '港式', '小籠包'],
         FoodCategory.snack => const ['小吃', '滷肉飯', '雞排', '鹽酥雞', '蚵仔', '肉圓', '碗粿', '滷味'],
         FoodCategory.noodle => const ['麵', '麵線', '米粉', '粄條'],
