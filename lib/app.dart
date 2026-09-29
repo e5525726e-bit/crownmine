@@ -12,7 +12,7 @@ class CrownMineApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '皇冠與地雷',
+      title: '美食地圖',
       debugShowCheckedModeBanner: false,
       locale: const Locale('zh', 'TW'),
       supportedLocales: const [Locale('zh', 'TW'), Locale('en')],

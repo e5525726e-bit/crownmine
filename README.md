@@ -1,4 +1,4 @@
-# 皇冠與地雷（CrownMine）
+# 美食地圖（CrownMine）
 
 > 只屬於這個 App 的餐廳評價。店家資料來自 Google，評價完全獨立，看不到也不會抓取 Google 的評論。
 

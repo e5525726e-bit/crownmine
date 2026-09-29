@@ -5,7 +5,7 @@
 	<key>GMSApiKey</key>
 	<string>$(MAPS_API_KEY)</string>
 	<key>CFBundleDisplayName</key>
-	<string>皇冠與地雷</string>
+	<string>美食地圖</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>用來尋找你附近的餐廳。</string>
 	<key>NSCameraUsageDescription</key>

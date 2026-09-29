@@ -7,7 +7,7 @@
     <!-- 評價照片、消費證明拍照（image_picker 會自行處理相簿權限） -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <application
-        android:label="皇冠與地雷"
+        android:label="美食地圖"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
