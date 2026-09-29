@@ -6,9 +6,7 @@ import '../../services/location_hub.dart';
 import '../place/place_detail_screen.dart';
 
 import '../map/map_screen.dart';
-import '../nearby/nearby_screen.dart';
 import '../profile/profile_screen.dart';
-import '../search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,12 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  static const _pages = [
-    SearchScreen(),
-    MapScreen(),
-    NearbyScreen(),
-    ProfileScreen()
-  ];
+  static const _pages = [MapScreen(), ProfileScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -59,11 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
         inactiveColor: theme.colorScheme.onSurfaceVariant,
         border: Border(top: BorderSide(color: theme.dividerColor, width: 0.5)),
         items: const [
-          BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.search), label: '搜尋'),
           BottomNavigationBarItem(icon: Icon(CupertinoIcons.map), label: '地圖'),
-          BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.location), label: '附近'),
           BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.person), label: '我的'),
         ],
