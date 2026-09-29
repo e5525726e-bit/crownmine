@@ -7,7 +7,7 @@ create extension if not exists pg_trgm;
 
 -- 四種核心判斷：皇冠（真心推薦）、綠燈（普通中規中矩）、地雷（普通又貴）、大便（難吃／態度環境很差）
 -- poop 已改為附加標籤，enum 值保留只為相容舊資料（下方 check 禁止再寫入）
-create type public.verdict as enum ('crown', 'rich', 'green', 'mine', 'poop');
+create type public.verdict as enum ('crown', 'rice', 'rich', 'green', 'mine', 'poop');
 
 -- ---------------------------------------------------------------------
 -- 使用者公開資料（auth.users 建立時自動產生）
@@ -143,6 +143,7 @@ with (security_invoker = true) as
 select
   place_id,
   count(*) filter (where verdict = 'crown') as crowns,
+  count(*) filter (where verdict = 'rice')  as rices,
   count(*) filter (where verdict = 'rich')  as richs,
   count(*) filter (where verdict = 'green') as greens,
   count(*) filter (where verdict = 'mine')  as mines,
@@ -160,14 +161,14 @@ create or replace function public.search_reviewed_places(q text)
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
   primary_type text, types text[],
-  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint, rices bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng, p.primary_type, p.types,
-         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires, s.rices
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where q = '' or p.name ilike '%' || q || '%' or p.address ilike '%' || q || '%'
-  order by (s.crowns + s.richs + s.greens + s.mines) desc, p.name
+  order by (s.crowns + s.rices + s.richs + s.greens + s.mines) desc, p.name
   limit 50;
 $$;
 
@@ -179,15 +180,15 @@ create or replace function public.places_in_bounds(
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
   primary_type text, types text[],
-  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint, rices bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng, p.primary_type, p.types,
-         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires, s.rices
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where p.lat between min_lat and max_lat
     and p.lng between min_lng and max_lng
-  order by (s.crowns + s.richs + s.greens + s.mines) desc
+  order by (s.crowns + s.rices + s.richs + s.greens + s.mines) desc
   limit 200;
 $$;
 

@@ -97,10 +97,11 @@ class ReviewedPlace {
       );
 }
 
-/// 一家店的四種核心判斷各有幾個，以及各種附加標籤各被標了幾次。
+/// 一家店的五種核心判斷各有幾個，以及各種附加標籤各被標了幾次。
 class PlaceStats {
   const PlaceStats({
     this.crowns = 0,
+    this.rices = 0,
     this.greens = 0,
     this.mines = 0,
     this.poops = 0,
@@ -112,6 +113,7 @@ class PlaceStats {
   });
 
   final int crowns;
+  final int rices;
   final int greens;
   final int mines;
   final int poops;
@@ -121,7 +123,7 @@ class PlaceStats {
   final int photogenics;
   final int dates;
 
-  int get total => crowns + richs + greens + mines;
+  int get total => crowns + rices + richs + greens + mines;
 
   /// 最多人給的標記；平手時依 [Verdict.values] 的順序（皇冠優先）。
   Verdict? get dominant {
@@ -135,6 +137,7 @@ class PlaceStats {
 
   int count(Verdict v) => switch (v) {
         Verdict.crown => crowns,
+        Verdict.rice => rices,
         Verdict.rich => richs,
         Verdict.green => greens,
         Verdict.mine => mines,
@@ -160,6 +163,7 @@ class PlaceStats {
 
   factory PlaceStats.fromRow(Map<String, dynamic>? r) => PlaceStats(
         crowns: (r?['crowns'] as num?)?.toInt() ?? 0,
+        rices: (r?['rices'] as num?)?.toInt() ?? 0,
         greens: (r?['greens'] as num?)?.toInt() ?? 0,
         mines: (r?['mines'] as num?)?.toInt() ?? 0,
         poops: (r?['poops'] as num?)?.toInt() ?? 0,

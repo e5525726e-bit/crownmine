@@ -52,12 +52,14 @@ void main() {
     expect(Verdict.crown.isNegative, isFalse);
     expect(Verdict.green.isNegative, isFalse);
     expect(Verdict.rich.isNegative, isFalse);
-    expect(Verdict.values.length, 4);
+    expect(Verdict.values.length, 5);
+    expect(Verdict.rice.isNegative, isFalse);
   });
 
-  test('PlaceStats 四種計數與標籤', () {
-    final s = PlaceStats.fromRow({'crowns': 3, 'greens': 2, 'mines': 1, 'poops': 5, 'igs': 4, 'photogenics': 1, 'richs': 2, 'dates': 0, 'fires': 6});
-    expect(s.total, 8);
+  test('PlaceStats 五種計數與標籤', () {
+    final s = PlaceStats.fromRow({'crowns': 3, 'rices': 4, 'greens': 2, 'mines': 1, 'poops': 5, 'igs': 4, 'photogenics': 1, 'richs': 2, 'dates': 0, 'fires': 6});
+    expect(s.total, 12);
+    expect(s.count(Verdict.rice), 4);
     expect(s.tagCount(ReviewTag.ig), 4);
     expect(s.isTagged(ReviewTag.ig), isTrue);
     expect(s.isTagged(ReviewTag.photogenic), isFalse);
@@ -78,6 +80,7 @@ void _dominantTests() {
     expect(const PlaceStats().dominant, isNull);
     expect(const PlaceStats(crowns: 1, mines: 4).dominant, Verdict.mine);
     expect(const PlaceStats(richs: 3, greens: 1).dominant, Verdict.rich);
+    expect(const PlaceStats(rices: 2, richs: 2).dominant, Verdict.rice);
     expect(const PlaceStats(crowns: 2, mines: 2).dominant, Verdict.crown);
     expect(const PlaceStats(greens: 3, mines: 1).dominant, Verdict.green);
   });

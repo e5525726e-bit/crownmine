@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// App 內唯一的評價方式：不是星等，只有四種核心判斷。
-/// 皇冠、老子有錢不差錢、綠燈（紅綠燈亮綠燈）、地雷。順序即畫面顯示順序（由好到壞）。
+/// App 內唯一的評價方式：不是星等，只有五種核心判斷。
+/// 皇冠、便宜又大碗、老子有錢不差錢、綠燈（紅綠燈亮綠燈）、地雷。順序即畫面顯示順序（由好到壞）。
 /// 「超好吃／必吃」「IG 網紅店」「網美店」「適合約會」「難吃／態度環境很差」是附加標籤，見 [ReviewTag]。
 enum Verdict {
   crown('crown', '真心推薦', '值得專程來吃', 'assets/icons/crown.svg', Color(0xFFB07E00)),
+  rice('rice', '便宜又大碗', '吃得飽又划算，好不好吃看標籤', 'assets/icons/rice.svg',
+      Color(0xFF1E88E5)),
   rich('rich', '老子有錢不差錢', '貴，但有錢就是任性', 'assets/icons/money_face.svg',
       Color(0xFFC79A00)),
   green('green', '普通中規中矩', '不好不壞，價格合理', 'assets/icons/green_light.svg',
@@ -21,7 +23,7 @@ enum Verdict {
   final String asset;
   final Color color;
 
-  /// 皇冠、有錢、綠燈算正面或中性，地雷算負面。
+  /// 皇冠、大碗、有錢、綠燈算正面或中性，地雷算負面。
   bool get isNegative => this == mine;
 
   static Verdict fromDb(String value) =>

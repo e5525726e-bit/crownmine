@@ -35,7 +35,7 @@ class MarkerTier {
       MarkerTier._(scaleFor(total), total >= 3);
 }
 
-/// 把四種標記畫成 Google 地圖那種「大頭針」：
+/// 把五種標記畫成 Google 地圖那種「大頭針」：
 /// 針頭是白色圓形放評價圖示、外框用該標記的顏色、下面有針尖與地面陰影。
 /// 取代 Google 原本的紅色大頭針。
 class VerdictMarkerIcons {
