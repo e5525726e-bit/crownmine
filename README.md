@@ -89,7 +89,7 @@ test/                                模型測試與畫面 smoke test
 沒有 Mac 也沒有 Apple 開發者帳號時，iPhone 可以先用網頁版試用（功能與 App 相同）：
 
 1. Actions → **網頁版部署到 Supabase** → Run workflow，貼上 Supabase 權杖。
-2. 完成後 iPhone Safari 打開 `https://<專案ref>.supabase.co/storage/v1/object/public/web/index.html`。
+2. 完成後 iPhone Safari 打開 `https://<專案ref>.supabase.co/functions/v1/web`。
 3. 分享 → **加入主畫面**，之後從主畫面開就像 App。
 
 正式 iOS App 需要 Apple Developer Program（每年 99 美元），之後可由 GitHub 的 macOS 主機自動建置並透過 TestFlight 安裝，不需要 Mac。

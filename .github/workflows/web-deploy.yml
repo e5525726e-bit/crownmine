@@ -99,15 +99,40 @@ jobs:
           done < <(find . -type f -print0)
           echo "  上傳 $n 個檔案"
 
+      - name: 用 Edge Function 提供首頁（Storage 不能直接當 HTML 網站）
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ inputs.supabase_access_token }}
+          URL: ${{ steps.cfg.outputs.url }}
+          REF: ${{ steps.cfg.outputs.ref }}
+        run: |
+          set -euo pipefail
+          mkdir -p supabase/functions/web
+          # 把 index.html 內容嵌進函式，回應時標明 text/html
+          python3 - <<'PYEOF'
+          import json
+          html = open('build/web/index.html', encoding='utf-8').read()
+          src = f"""// 自動產生：提供 Flutter 網頁版首頁，其餘檔案由 Storage bucket「web」提供。
+          const HTML = {json.dumps(html)};
+          Deno.serve((_req) =>
+            new Response(HTML, {{
+              headers: {{
+                "content-type": "text/html; charset=utf-8",
+                "cache-control": "no-cache",
+              }},
+            }}));
+          """
+          open('supabase/functions/web/index.ts', 'w', encoding='utf-8').write(src)
+          PYEOF
+          npx --yes supabase@latest functions deploy web --project-ref "$REF" --no-verify-jwt
           echo "==> 驗證"
-          curl -sS -D - -o /dev/null "$URL/storage/v1/object/public/web/index.html" | grep -i "HTTP/\|content-type\|content-disposition" || true
+          curl -sS -D - -o /dev/null "$URL/functions/v1/web" | grep -i "HTTP/\|content-type" || true
 
       - name: 摘要
         run: |
           {
             echo "## 網頁版已部署"
             echo ""
-            echo "iPhone Safari 打開：${{ steps.cfg.outputs.url }}/storage/v1/object/public/web/index.html"
+            echo "iPhone Safari 打開：${{ steps.cfg.outputs.url }}/functions/v1/web"
             echo ""
             echo "開啟後按分享 → 加入主畫面，就會像 App 一樣。"
           } >> "$GITHUB_STEP_SUMMARY"
