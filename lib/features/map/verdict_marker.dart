@@ -227,11 +227,13 @@ class VerdictMarkerIcons {
       ..drawPicture(info.picture)
       ..restore();
 
-    // 附加標籤徽章：左上 → 左下 → 右下（右上留給評價數）
+    // 附加標籤徽章：左上 → 左下 → 右下（右上留給評價數）。
+    // 標籤越多徽章越小，避免蓋住針頭。
     const slots = [Offset(-0.72, -0.72), Offset(-0.95, 0.35), Offset(0.95, 0.35)];
+    final badgeScale = switch (badges.length) { 0 || 1 => 0.5, 2 => 0.42, _ => 0.36 };
     for (var i = 0; i < badges.length; i++) {
       final pic = badges[i];
-      final r = outerR * 0.5;
+      final r = outerR * badgeScale;
       final c = headCenter + slots[i] * outerR;
       canvas.drawCircle(c, r + 1.5, Paint()..color = Colors.white);
       canvas.drawCircle(c, r, Paint()..color = Colors.white);
