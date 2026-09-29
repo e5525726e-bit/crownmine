@@ -1,10 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../widgets/apple_bars.dart';
 import '../../di.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
 import '../../utils/format.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/inset_group.dart';
+import '../../widgets/inset_list_view.dart';
 import '../../widgets/verdict_icon.dart';
 import '../place/place_detail_screen.dart';
 
@@ -23,7 +27,8 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('我的評價')),
+      extendBodyBehindAppBar: true,
+      appBar: const AppleAppBar(title: Text('我的評價')),
       body: AsyncBody<List<(Review, Place)>>(
         future: _future,
         onRetry: _reload,
@@ -31,9 +36,9 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
           if (items.isEmpty) {
             return const Center(child: Text('你還沒有寫過評價'));
           }
-          return ListView.separated(
+          return InsetListView(
+            padding: barInsets(context, bottom: 24).add(const EdgeInsets.symmetric(horizontal: 16)),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final (review, place) = items[i];
               return ListTile(
@@ -45,8 +50,9 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 isThreeLine: true,
+                trailing: const Chevron(),
                 onTap: () async {
-                  await Navigator.of(context).push(MaterialPageRoute(
+                  await Navigator.of(context).push(CupertinoPageRoute(
                     builder: (_) => PlaceDetailScreen(placeId: place.id, initial: place),
                   ));
                   _reload();

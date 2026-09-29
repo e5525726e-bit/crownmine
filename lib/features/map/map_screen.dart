@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -8,6 +9,7 @@ import '../../di.dart';
 import '../../models/review.dart';
 import '../../models/verdict.dart';
 import '../../utils/format.dart';
+import '../../widgets/apple_bars.dart';
 import '../../widgets/verdict_icon.dart';
 import '../../widgets/verdict_summary.dart';
 import '../place/place_detail_screen.dart';
@@ -155,11 +157,11 @@ class _MapScreenState extends State<MapScreen> {
             FilledButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);
-                Navigator.of(context).push(MaterialPageRoute(
+                Navigator.of(context).push(CupertinoPageRoute(
                   builder: (_) => PlaceDetailScreen(placeId: p.placeId),
                 ));
               },
-              icon: const Icon(Icons.storefront),
+              icon: const Icon(CupertinoIcons.chevron_right_circle_fill),
               label: Text('查看店家與 ${p.stats.total} 則評價'),
             ),
           ],
@@ -171,13 +173,13 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      extendBodyBehindAppBar: true,
+      appBar: AppleAppBar(
         title: const Text('評價地圖'),
         actions: [
-          IconButton(
-            tooltip: '移到目前位置',
-            icon: const Icon(Icons.my_location),
+          CupertinoButton(
             onPressed: _locateMe,
+            child: const Icon(CupertinoIcons.location_fill),
           ),
         ],
       ),
@@ -199,7 +201,7 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             left: 12,
             right: 12,
-            top: 12,
+            top: MediaQuery.paddingOf(context).top + 12,
             child: _Legend(loading: _loading, error: _error),
           ),
         ],

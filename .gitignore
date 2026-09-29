@@ -20,7 +20,7 @@ build/
 dart_defines.json
 
 # 產生預覽圖用的暫存測試與字型
-test/_preview/
+preview/
 
 # Google Maps 金鑰（由 tool/sync_keys.dart 產生）
 ios/Flutter/Secrets.xcconfig

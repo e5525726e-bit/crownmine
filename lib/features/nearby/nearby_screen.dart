@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -5,6 +6,8 @@ import '../../di.dart';
 import '../../models/place.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/google_attribution.dart';
+import '../../widgets/inset_group.dart';
+import '../../widgets/inset_list_view.dart';
 import '../../widgets/place_thumbnail.dart';
 import '../place/place_detail_screen.dart';
 
@@ -27,8 +30,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
     }
-    if (perm == LocationPermission.denied ||
-        perm == LocationPermission.deniedForever) {
+    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
       throw Exception('需要定位權限才能找附近的餐廳，請到系統設定開啟');
     }
     final pos = await Geolocator.getCurrentPosition();
@@ -43,79 +45,97 @@ class _NearbyScreenState extends State<NearbyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('附近餐廳'),
-        actions: [
-          IconButton(
-            tooltip: '重新整理',
-            icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              children: [
-                for (final r in const [500.0, 1000.0, 2000.0])
-                  ChoiceChip(
-                    label: Text(r >= 1000 ? '${(r / 1000).toStringAsFixed(0)} 公里' : '${r.toInt()} 公尺'),
-                    selected: _radius == r,
-                    onSelected: (_) {
-                      _radius = r;
-                      _refresh();
-                    },
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(child: Text('附近餐廳', style: theme.textTheme.displayLarge)),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: _refresh,
+                    child: const Icon(CupertinoIcons.refresh),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: AsyncBody<List<Place>>(
-              future: _future,
-              onRetry: _refresh,
-              empty: Center(
-                child: FilledButton.icon(
-                  onPressed: _refresh,
-                  icon: const Icon(Icons.my_location),
-                  label: const Text('用目前位置找餐廳'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: SizedBox(
+                width: double.infinity,
+                child: CupertinoSlidingSegmentedControl<double>(
+                  groupValue: _radius,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  thumbColor: (theme.cardTheme.color ?? theme.colorScheme.surface),
+                  children: {
+                    for (final r in const [500.0, 1000.0, 2000.0])
+                      r: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(
+                          r >= 1000 ? '${(r / 1000).toStringAsFixed(0)} 公里' : '${r.toInt()} 公尺',
+                          style: theme.textTheme.titleSmall,
+                        ),
+                      ),
+                  },
+                  onValueChanged: (r) {
+                    if (r == null) return;
+                    _radius = r;
+                    _refresh();
+                  },
                 ),
               ),
-              builder: (context, places) {
-                if (places.isEmpty) {
-                  return const Center(child: Text('這個範圍內沒有餐飲店家'));
-                }
-                return ListView.separated(
-                  itemCount: places.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final p = places[i];
-                    return ListTile(
-                      leading: PlaceThumbnail(p),
-                      title: Text(p.name),
-                      subtitle: Text(
-                        [
-                          if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
-                          p.address,
-                        ].join(' · '),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) =>
-                            PlaceDetailScreen(placeId: p.id, initial: p),
-                      )),
-                    );
-                  },
-                );
-              },
             ),
-          ),
-          const GoogleAttribution(),
-        ],
+            Expanded(
+              child: AsyncBody<List<Place>>(
+                future: _future,
+                onRetry: _refresh,
+                empty: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: FilledButton.icon(
+                      onPressed: _refresh,
+                      icon: const Icon(CupertinoIcons.location_fill),
+                      label: const Text('用目前位置找餐廳'),
+                    ),
+                  ),
+                ),
+                builder: (context, places) {
+                  if (places.isEmpty) {
+                    return const Center(child: Text('這個範圍內沒有餐飲店家'));
+                  }
+                  return InsetListView(
+                    itemCount: places.length,
+                    itemBuilder: (context, i) {
+                      final p = places[i];
+                      return ListTile(
+                        leading: PlaceThumbnail(p),
+                        title: Text(p.name),
+                        subtitle: Text(
+                          [
+                            if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
+                            p.address,
+                          ].join(' · '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: const Chevron(),
+                        onTap: () => Navigator.of(context).push(CupertinoPageRoute(
+                          builder: (_) => PlaceDetailScreen(placeId: p.id, initial: p),
+                        )),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            const GoogleAttribution(),
+          ],
+        ),
       ),
     );
   }

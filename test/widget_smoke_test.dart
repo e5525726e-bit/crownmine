@@ -12,6 +12,12 @@ Widget _wrap(Widget child) => MaterialApp(
       home: child,
     );
 
+void _phone(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1170, 2532);
+  tester.view.devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
+}
+
 void main() {
   const place = Place(
     id: 'p1',
@@ -22,6 +28,7 @@ void main() {
   );
 
   testWidgets('寫評價頁顯示四種標記且可以選取', (tester) async {
+    _phone(tester);
     await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));
     await tester.pumpAndSettle();
 
@@ -40,6 +47,7 @@ void main() {
   });
 
   testWidgets('沒選標記就送出會提示', (tester) async {
+    _phone(tester);
     await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(

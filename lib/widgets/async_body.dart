@@ -35,7 +35,7 @@ class AsyncBody<T> extends StatelessWidget {
                   Text(friendlyError(snap.error!), textAlign: TextAlign.center),
                   if (onRetry != null) ...[
                     const SizedBox(height: 12),
-                    FilledButton.tonal(onPressed: onRetry, child: const Text('重試')),
+                    TextButton(onPressed: onRetry, child: const Text('重試')),
                   ],
                 ],
               ),

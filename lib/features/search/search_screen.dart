@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../di.dart';
@@ -5,6 +6,8 @@ import '../../models/place.dart';
 import '../../models/review.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/google_attribution.dart';
+import '../../widgets/inset_group.dart';
+import '../../widgets/inset_list_view.dart';
 import '../../widgets/place_thumbnail.dart';
 import '../../widgets/verdict_summary.dart';
 import '../place/place_detail_screen.dart';
@@ -53,58 +56,71 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _open(String placeId, {Place? initial}) {
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).push(CupertinoPageRoute(
       builder: (_) => PlaceDetailScreen(placeId: placeId, initial: initial),
     ));
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('找餐廳')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: SegmentedButton<_Mode>(
-              segments: const [
-                ButtonSegment(
-                    value: _Mode.google,
-                    icon: Icon(Icons.storefront),
-                    label: Text('找店家')),
-                ButtonSegment(
-                    value: _Mode.app,
-                    icon: Icon(Icons.rate_review),
-                    label: Text('找評價')),
-              ],
-              selected: {_mode},
-              onSelectionChanged: (s) => setState(() => _mode = s.first),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _controller,
-              textInputAction: TextInputAction.search,
-              onSubmitted: _submit,
-              decoration: InputDecoration(
-                hintText: _mode == _Mode.google
-                    ? '店名或地區，例如「台中 火鍋」'
-                    : '搜尋已有評價的店家',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.arrow_forward),
-                  onPressed: _submit,
-                ),
-                border: const OutlineInputBorder(),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Text('找餐廳', style: theme.textTheme.displayLarge),
+                ],
               ),
             ),
-          ),
-          Expanded(
-            child: _mode == _Mode.google ? _googleResults() : _appResults(),
-          ),
-          if (_mode == _Mode.google) const GoogleAttribution(),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: CupertinoSearchTextField(
+                controller: _controller,
+                placeholder: _mode == _Mode.google ? '店名或地區，例如「台中 火鍋」' : '搜尋已有評價的店家',
+                onSubmitted: _submit,
+                onSuffixTap: () {
+                  _controller.clear();
+                  if (_mode == _Mode.app) _submit();
+                },
+                style: theme.textTheme.bodyLarge,
+                backgroundColor: theme.cardTheme.color,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: SizedBox(
+                width: double.infinity,
+                child: CupertinoSlidingSegmentedControl<_Mode>(
+                  groupValue: _mode,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  thumbColor: (theme.cardTheme.color ?? theme.colorScheme.surface),
+                  children: {
+                    _Mode.google: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text('找店家', style: theme.textTheme.titleSmall),
+                    ),
+                    _Mode.app: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text('找評價', style: theme.textTheme.titleSmall),
+                    ),
+                  },
+                  onValueChanged: (m) {
+                    if (m != null) setState(() => _mode = m);
+                  },
+                ),
+              ),
+            ),
+            Expanded(
+              child: _mode == _Mode.google ? _googleResults() : _appResults(),
+            ),
+            if (_mode == _Mode.google) const GoogleAttribution(),
+          ],
+        ),
       ),
     );
   }
@@ -113,16 +129,15 @@ class _SearchScreenState extends State<SearchScreen> {
         future: _googleFuture,
         onRetry: _submit,
         empty: const _Hint(
-          icon: Icons.storefront,
+          icon: CupertinoIcons.search,
           text: '輸入店名或地區開始找店家。\n只會列出餐飲業，不會顯示 Google 的評價。',
         ),
         builder: (context, places) {
           if (places.isEmpty) {
-            return const _Hint(icon: Icons.search_off, text: '找不到符合的餐飲店家');
+            return const _Hint(icon: CupertinoIcons.search, text: '找不到符合的餐飲店家');
           }
-          return ListView.separated(
+          return InsetListView(
             itemCount: places.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final p = places[i];
               return ListTile(
@@ -137,9 +152,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                trailing: p.isClosedPermanently
-                    ? const Chip(label: Text('已歇業'))
-                    : null,
+                trailing: p.isClosedPermanently ? const Chip(label: Text('已歇業')) : const Chevron(),
                 onTap: () => _open(p.id, initial: p),
               );
             },
@@ -153,29 +166,30 @@ class _SearchScreenState extends State<SearchScreen> {
         builder: (context, items) {
           if (items.isEmpty) {
             return _Hint(
-              icon: Icons.rate_review_outlined,
+              icon: CupertinoIcons.chat_bubble_2,
               text: _lastAppQuery.isEmpty
                   ? '還沒有任何評價。\n到「找店家」找到餐廳後，寫下第一則吧！'
                   : '沒有符合「$_lastAppQuery」且已有評價的店家',
             );
           }
-          return ListView.builder(
-            itemCount: items.length + 1,
+          return InsetListView(
+            header: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+              child: Text(
+                _lastAppQuery.isEmpty ? '評價最多的店家' : '搜尋結果',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ),
+            itemCount: items.length,
             itemBuilder: (context, i) {
-              if (i == 0) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                  child: Text(
-                    _lastAppQuery.isEmpty ? '評價最多的店家' : '搜尋結果',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                );
-              }
-              final r = items[i - 1];
+              final r = items[i];
               return ListTile(
                 title: Text(r.name),
                 subtitle: Text(r.address, maxLines: 1, overflow: TextOverflow.ellipsis),
-                trailing: VerdictSummary(r.stats, compact: true),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [VerdictSummary(r.stats, compact: true), const Chevron()],
+                ),
                 onTap: () => _open(r.placeId),
               );
             },
@@ -196,11 +210,13 @@ class _Hint extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 48, color: Theme.of(context).colorScheme.outline),
+              Icon(icon, size: 44, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(height: 12),
               Text(text,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      )),
             ],
           ),
         ),

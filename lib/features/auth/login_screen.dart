@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../di.dart';
+import '../../widgets/apple_bars.dart';
 import '../../utils/format.dart';
 import '../profile/terms_screen.dart';
 
@@ -73,11 +75,20 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_signUp ? '註冊' : '登入')),
+      extendBodyBehindAppBar: true,
+      appBar: AppleAppBar(
+        title: Text(_signUp ? '註冊' : '登入'),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => Navigator.of(context).maybePop(),
+          child: const Text('取消'),
+        ),
+        leadingWidth: 72,
+      ),
       body: Form(
         key: _form,
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: barInsets(context, top: 24, bottom: 24).add(const EdgeInsets.symmetric(horizontal: 24)),
           children: [
             Text(
               '登入後才能發表評價，瀏覽不需要登入。',
@@ -122,25 +133,35 @@ class _LoginScreenState extends State<LoginScreen> {
               onFieldSubmitted: (_) => _submit(),
             ),
             if (_signUp)
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                value: _agreed,
-                onChanged: (v) => setState(() => _agreed = v ?? false),
-                title: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
                   children: [
-                    const Text('我已閱讀並同意'),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const TermsScreen()),
+                    CupertinoSwitch(
+                      value: _agreed,
+                      onChanged: (v) => setState(() => _agreed = v),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Text('我已閱讀並同意'),
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 0),
+                            onPressed: () => Navigator.of(context).push(
+                              CupertinoPageRoute(builder: (_) => const TermsScreen()),
+                            ),
+                            child: const Text('使用條款與社群規範'),
+                          ),
+                        ],
                       ),
-                      child: const Text('使用條款與社群規範'),
                     ),
                   ],
                 ),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             FilledButton(
               onPressed: _busy ? null : _submit,
               child: _busy

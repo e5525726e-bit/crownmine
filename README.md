@@ -28,6 +28,18 @@
 - **帳號**：Email 註冊登入，瀏規不需登入，發表才需要。可修改顯示名稱、刪除帳號（Apple 上架必要）。
 - **內容管理**（App Store／Play 對使用者內容的必要條件）：每則評價可檢舉、可封鎖使用者；同一則被 3 人檢舉自動隱藏待審；使用條款與社群規範頁；聯絡信箱。
 
+## 設計原則（Apple 風格）
+
+外觀依 Apple Human Interface Guidelines；手感依 [emilkowalski/skills](https://github.com/emilkowalski/skills) 的 `apple-design`：
+
+- **按下就有反應**：可點的卡片在按下的瞬間縮小 3%，放開用彈簧回彈（`widgets/press_scale.dart`）。
+- **彈簧、可中斷**：動畫用阻尼比與回應時間描述，從當下的值接續，不用固定秒數（`theme/motion.dart`）。
+- **材質與層次**：導覽列、分頁列、底部動作列都是半透明毛玻璃，內容從底下滑過（`widgets/apple_bars.dart`）。
+- **字體**：字級、字距、行距一起設定，大字負字距、小字近零；預設使用系統字型（`theme/apple_theme.dart`）。
+- **減少動態**：系統開啟時改用透明度回饋、取消過渡動畫。
+- **回饋有節制**：只在選標記、送出成功時給輕微觸覺回饋；確認對話框只用在刪除、封鎖這類不可逆動作。
+- **iOS 元件**：分頁列、分段控制、搜尋欄、動作選單、日期選擇器、返回手勢都用 Cupertino 版本。
+
 ## 技術架構
 
 ```
@@ -53,7 +65,9 @@ lib/
     review/     寫評價、評價卡片、檢舉對話框
     auth/       登入／註冊
     profile/    我的、我的評價、使用條款
-  widgets/      標記圖示、統計列、Google 來源標示等
+  theme/        Apple 風格主題與彈簧動畫參數
+  widgets/      標記圖示、統計列、分組列表、毛玻璃導覽列、按壓回饋、Google 來源標示等
+  ../preview/   產生預覽圖的工具（不進 git）
 supabase/migrations/0001_init.sql   資料庫結構、權限規則、Storage bucket
 tool/sync_keys.dart                  把金鑰同步到 Android／iOS 原生設定
 test/                                模型測試與畫面 smoke test

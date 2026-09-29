@@ -1,11 +1,15 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../widgets/apple_bars.dart';
 import '../../di.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
+import '../../widgets/apple_dialogs.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/google_attribution.dart';
+import '../../widgets/inset_group.dart';
 import '../../widgets/verdict_summary.dart';
 import '../auth/login_screen.dart';
 import '../review/report_dialog.dart';
@@ -69,7 +73,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Future<bool> _ensureSignedIn() async {
     if (reviewRepo.isSignedIn) return true;
     final ok = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      CupertinoPageRoute(builder: (_) => const LoginScreen(), fullscreenDialog: true),
     );
     return ok == true && reviewRepo.isSignedIn;
   }
@@ -77,8 +81,9 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Future<void> _write(Place place, Review? existing) async {
     if (!await _ensureSignedIn()) return;
     if (!mounted) return;
-    final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
+    final saved = await Navigator.of(context).push<bool>(CupertinoPageRoute(
       builder: (_) => WriteReviewScreen(place: place, existing: existing),
+      fullscreenDialog: true,
     ));
     if (saved == true) _reload();
   }
@@ -86,7 +91,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Future<void> _report(Review r) async {
     if (!await _ensureSignedIn()) return;
     if (!mounted) return;
-    final result = await showReportDialog(context);
+    final result = await showReportSheet(context);
     if (result == null) return;
     await reviewRepo.report(r.id, reason: result.reason, detail: result.detail);
     if (!mounted) return;
@@ -98,35 +103,27 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Future<void> _block(Review r) async {
     if (!await _ensureSignedIn()) return;
     if (!mounted) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('封鎖此使用者？'),
-        content: Text('之後將不會再看到「${r.authorName}」的任何評價。'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('封鎖')),
-        ],
-      ),
+    final ok = await showConfirm(
+      context,
+      title: '封鎖此使用者？',
+      message: '之後將不會再看到「${r.authorName}」的任何評價。',
+      confirmLabel: '封鎖',
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     await reviewRepo.blockUser(r.userId);
     _reload();
   }
 
   Future<void> _delete(Review r) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('刪除我的評價？'),
-        content: const Text('刪除後無法復原。'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('刪除')),
-        ],
-      ),
+    final ok = await showConfirm(
+      context,
+      title: '刪除我的評價？',
+      message: '刪除後無法復原。',
+      confirmLabel: '刪除',
+      destructive: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     await reviewRepo.deleteReview(r.id);
     _reload();
   }
@@ -143,13 +140,21 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       onRetry: _reload,
       builder: (context, d) {
         final p = d.place;
-        final text = Theme.of(context).textTheme;
+        final theme = Theme.of(context);
+        final text = theme.textTheme;
         return Scaffold(
-          appBar: AppBar(title: Text(p.name)),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _write(p, d.mine),
-            icon: Icon(d.mine == null ? Icons.edit : Icons.edit_note),
-            label: Text(d.mine == null ? '寫評價' : '修改我的評價'),
+          extendBodyBehindAppBar: true,
+          extendBody: true,
+          appBar: AppleAppBar(
+            title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          // 主要動作放在底部材質列（iOS 慣例），而不是浮動按鈕
+          bottomNavigationBar: AppleBottomBar(
+            child: FilledButton.icon(
+              onPressed: () => _write(p, d.mine),
+              icon: Icon(d.mine == null ? CupertinoIcons.square_pencil : CupertinoIcons.pencil),
+              label: Text(d.mine == null ? '寫評價' : '修改我的評價'),
+            ),
           ),
           body: RefreshIndicator(
             onRefresh: () async {
@@ -157,70 +162,70 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               await _future;
             },
             child: ListView(
-              padding: const EdgeInsets.only(bottom: 96),
+              padding: barInsets(context),
               children: [
                 if (p.photos.isNotEmpty) _HeaderPhoto(place: p),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                  child: Text(p.name, style: text.headlineSmall),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Text(p.name, style: text.headlineLarge),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (p.primaryTypeLabel != null)
-                        Chip(label: Text(p.primaryTypeLabel!)),
-                      if (p.priceLabel != null) Chip(label: Text(p.priceLabel!)),
-                      if (p.isClosedPermanently)
-                        Chip(
-                          label: const Text('已歇業'),
-                          backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                        ),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(
+                    [
+                      if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
+                      if (p.priceLabel != null) p.priceLabel!,
+                      if (p.isClosedPermanently) '已歇業',
+                    ].join(' · '),
+                    style: text.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.place_outlined),
-                  title: Text(p.address),
-                  trailing: p.googleMapsUri == null
-                      ? null
-                      : const Icon(Icons.open_in_new, size: 18),
-                  onTap: () => _open(p.googleMapsUri),
+                InsetGroup(
+                  children: [
+                    ListTile(
+                      leading: const Icon(CupertinoIcons.location_solid),
+                      title: Text(p.address),
+                      trailing: p.googleMapsUri == null ? null : const Chevron(),
+                      onTap: () => _open(p.googleMapsUri),
+                    ),
+                    if (p.phone != null)
+                      ListTile(
+                        leading: const Icon(CupertinoIcons.phone_fill),
+                        title: Text(p.phone!),
+                        onTap: () => _open('tel:${p.phone}'),
+                      ),
+                    if (p.website != null)
+                      ListTile(
+                        leading: const Icon(CupertinoIcons.globe),
+                        title: Text(p.website!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        onTap: () => _open(p.website),
+                      ),
+                    if (p.weekdayDescriptions.isNotEmpty)
+                      ExpansionTile(
+                        leading: const Icon(CupertinoIcons.clock_fill),
+                        title: const Text('營業時間'),
+                        children: [
+                          for (final line in p.weekdayDescriptions)
+                            ListTile(dense: true, title: Text(line, style: text.bodyMedium)),
+                        ],
+                      ),
+                  ],
                 ),
-                if (p.phone != null)
-                  ListTile(
-                    leading: const Icon(Icons.phone_outlined),
-                    title: Text(p.phone!),
-                    onTap: () => _open('tel:${p.phone}'),
-                  ),
-                if (p.website != null)
-                  ListTile(
-                    leading: const Icon(Icons.language),
-                    title: Text(p.website!, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    onTap: () => _open(p.website),
-                  ),
-                if (p.weekdayDescriptions.isNotEmpty)
-                  ExpansionTile(
-                    leading: const Icon(Icons.schedule),
-                    title: const Text('營業時間'),
-                    children: [
-                      for (final line in p.weekdayDescriptions)
-                        ListTile(dense: true, title: Text(line)),
-                    ],
-                  ),
                 const GoogleAttribution(),
-                const Divider(),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                  child: Text('這個 App 的評價（${d.stats.total}）',
-                      style: text.titleMedium),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                  child: Text('這個 App 的評價', style: text.headlineMedium),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-                  child: VerdictSummary(d.stats),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text('共 ${d.stats.total} 則，皆為本 App 使用者發表',
+                      style: text.bodySmall),
+                ),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
+                    child: VerdictSummary(d.stats),
+                  ),
                 ),
                 if (d.reviews.isEmpty)
                   Padding(
@@ -228,7 +233,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     child: Text(
                       '還沒有人評價這家店，成為第一個吧！',
                       textAlign: TextAlign.center,
-                      style: text.bodyMedium,
+                      style: text.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ),
                 for (final r in d.reviews)
@@ -256,33 +261,39 @@ class _HeaderPhoto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final photo = place.photos.first;
-    return Stack(
-      children: [
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Image.network(
-            placesService.photoUrl(photo, maxWidth: 1200),
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-          ),
-        ),
-        if (photo.attributions.isNotEmpty)
-          Positioned(
-            right: 8,
-            bottom: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                '照片：${photo.attributions.join('、')}',
-                style: const TextStyle(color: Colors.white, fontSize: 11),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.network(
+                placesService.photoUrl(photo, maxWidth: 1200),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               ),
             ),
-          ),
-      ],
+            if (photo.attributions.isNotEmpty)
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '照片：${photo.attributions.join('、')}',
+                    style: const TextStyle(color: Colors.white, fontSize: 11),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

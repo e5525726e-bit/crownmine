@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../map/map_screen.dart';
@@ -18,17 +19,27 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _pages = [SearchScreen(), MapScreen(), NearbyScreen(), ProfileScreen()];
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        body: IndexedStack(index: _index, children: _pages),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.search), label: '搜尋'),
-            NavigationDestination(icon: Icon(Icons.map_outlined), label: '地圖'),
-            NavigationDestination(icon: Icon(Icons.near_me), label: '附近'),
-            NavigationDestination(icon: Icon(Icons.person), label: '我的'),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      extendBody: true,
+      body: IndexedStack(index: _index, children: _pages),
+      // iOS 風格分頁列：無陰影、上緣細線、選取用系統藍
+      bottomNavigationBar: CupertinoTabBar(
+        currentIndex: _index,
+        onTap: (i) => setState(() => _index = i),
+        // 半透明時 CupertinoTabBar 會自動加毛玻璃
+        backgroundColor: (theme.cardTheme.color ?? theme.colorScheme.surface).withValues(alpha: 0.75),
+        activeColor: theme.colorScheme.primary,
+        inactiveColor: theme.colorScheme.onSurfaceVariant,
+        border: Border(top: BorderSide(color: theme.dividerColor, width: 0.5)),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.search), label: '搜尋'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.map), label: '地圖'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.location), label: '附近'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.person), label: '我的'),
+        ],
+      ),
+    );
+  }
 }

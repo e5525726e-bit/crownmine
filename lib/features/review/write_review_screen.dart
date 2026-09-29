@@ -1,6 +1,7 @@
-import 'dart:typed_data';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../di.dart';
@@ -8,6 +9,9 @@ import '../../models/place.dart';
 import '../../models/review.dart';
 import '../../models/verdict.dart';
 import '../../utils/format.dart';
+import '../../theme/motion.dart';
+import '../../widgets/apple_bars.dart';
+import '../../widgets/press_scale.dart';
 import '../../widgets/verdict_icon.dart';
 
 class WriteReviewScreen extends StatefulWidget {
@@ -56,23 +60,24 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   }
 
   Future<void> _pickReceipt() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showCupertinoModalPopup<ImageSource>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('拍照'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('從相簿選擇'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text('消費證明'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, ImageSource.camera),
+            child: const Text('拍照'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
+            child: const Text('從相簿選擇'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('取消'),
         ),
       ),
     );
@@ -82,13 +87,42 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   }
 
   Future<void> _pickDate() async {
-    final d = await showDatePicker(
+    var picked = _visitedOn ?? DateTime.now();
+    await showCupertinoModalPopup<void>(
       context: context,
-      initialDate: _visitedOn ?? DateTime.now(),
-      firstDate: DateTime(2015),
-      lastDate: DateTime.now(),
+      builder: (ctx) => Container(
+        height: 300,
+        color: Theme.of(ctx).cardTheme.color,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CupertinoButton(
+                    onPressed: () {
+                      setState(() => _visitedOn = picked);
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text('完成'),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: picked,
+                  minimumDate: DateTime(2015),
+                  maximumDate: DateTime.now(),
+                  onDateTimeChanged: (d) => picked = d,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-    if (d != null) setState(() => _visitedOn = d);
   }
 
   Future<void> _submit() async {
@@ -111,6 +145,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
         receipt: _receipt,
       );
       if (!mounted) return;
+      // 完成回饋：與畫面關閉同一時刻
+      HapticFeedback.mediumImpact();
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -125,17 +161,24 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(
+      extendBodyBehindAppBar: true,
+      appBar: AppleAppBar(
         title: Text(widget.existing == null ? '寫評價' : '修改評價'),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => Navigator.of(context).maybePop(),
+          child: const Text('取消'),
+        ),
+        leadingWidth: 72,
       ),
       body: Form(
         key: _form,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: barInsets(context, top: 16, bottom: 32).add(const EdgeInsets.symmetric(horizontal: 16)),
           children: [
-            Text(widget.place.name, style: text.titleLarge),
+            Text(widget.place.name, style: text.headlineMedium),
             Text(widget.place.address, style: text.bodySmall),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text('這家店你給什麼？', style: text.titleMedium),
             const SizedBox(height: 8),
             GridView.count(
@@ -144,7 +187,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.35,
+              childAspectRatio: 1.22,
               children: [
                 for (final v in Verdict.values)
                   _VerdictOption(
@@ -189,19 +232,22 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               },
             ),
             const SizedBox(height: 4),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.event),
-              title: Text(_visitedOn == null ? '造訪日期（選填）' : fmtDate(_visitedOn!)),
-              trailing: _visitedOn == null
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () => setState(() => _visitedOn = null),
-                    ),
-              onTap: _pickDate,
+            Card(
+              margin: EdgeInsets.zero,
+              child: ListTile(
+                leading: const Icon(CupertinoIcons.calendar),
+                title: Text(_visitedOn == null ? '造訪日期（選填）' : fmtDate(_visitedOn!)),
+                trailing: _visitedOn == null
+                    ? const Icon(CupertinoIcons.chevron_right)
+                    : CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => setState(() => _visitedOn = null),
+                        child: const Icon(CupertinoIcons.xmark_circle_fill),
+                      ),
+                onTap: _pickDate,
+              ),
             ),
-            const Divider(),
+            const SizedBox(height: 24),
             Text('照片（選填，最多 6 張）', style: text.titleSmall),
             const SizedBox(height: 8),
             Wrap(
@@ -221,30 +267,32 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).colorScheme.outline),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Theme.of(context).cardTheme.color,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.add_a_photo_outlined),
+                      child: const Icon(CupertinoIcons.camera),
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 16),
             Card(
+              margin: EdgeInsets.zero,
               child: ListTile(
                 leading: Icon(
-                  _receipt == null ? Icons.receipt_long_outlined : Icons.verified,
-                  color: _receipt == null ? null : Colors.green,
+                  _receipt == null ? CupertinoIcons.doc_text : CupertinoIcons.checkmark_seal_fill,
+                  color: _receipt == null ? null : const Color(0xFF34C759),
                 ),
                 title: Text(_receipt == null ? '附上消費證明（選填）' : '已附上消費證明'),
                 subtitle: const Text(
                   '收據或發票照片只有你和管理員看得到，其他人只會看到「附消費證明」標記，讓評價更可信。',
                 ),
                 trailing: _receipt == null
-                    ? const Icon(Icons.chevron_right)
-                    : IconButton(
-                        icon: const Icon(Icons.clear),
+                    ? const Icon(CupertinoIcons.chevron_right)
+                    : CupertinoButton(
+                        padding: EdgeInsets.zero,
                         onPressed: () => setState(() => _receipt = null),
+                        child: const Icon(CupertinoIcons.xmark_circle_fill),
                       ),
                 onTap: _pickReceipt,
               ),
@@ -260,7 +308,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               icon: _submitting
                   ? const SizedBox(
                       width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.send),
+                  : const Icon(CupertinoIcons.paperplane_fill),
               label: Text(widget.existing == null ? '送出評價' : '更新評價'),
             ),
             const SizedBox(height: 32),
@@ -284,21 +332,19 @@ class _VerdictOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
+    return PressScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      haptic: true,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: selected
-              ? verdict.color.withValues(alpha: 0.12)
-              : scheme.surfaceContainerLow,
+          color: selected ? verdict.color.withValues(alpha: 0.10) : Theme.of(context).cardTheme.color,
           border: Border.all(
-            color: selected ? verdict.color : scheme.outlineVariant,
-            width: selected ? 2.5 : 1,
+            color: selected ? verdict.color : Colors.transparent,
+            width: 2,
           ),
         ),
         child: Column(
@@ -337,7 +383,7 @@ class _Thumb extends StatelessWidget {
           FutureBuilder<Uint8List>(
             future: file.readAsBytes(),
             builder: (_, snap) => ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               child: snap.hasData
                   ? Image.memory(snap.data!, width: 80, height: 80, fit: BoxFit.cover)
                   : const SizedBox(width: 80, height: 80),
@@ -347,7 +393,7 @@ class _Thumb extends StatelessWidget {
             top: -6,
             right: -6,
             child: IconButton(
-              icon: const Icon(Icons.cancel, size: 20),
+              icon: const Icon(CupertinoIcons.xmark_circle_fill, size: 20),
               onPressed: onRemove,
             ),
           ),
