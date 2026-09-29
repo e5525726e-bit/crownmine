@@ -1,8 +1,8 @@
 name: 網頁版（GitHub Pages）
 
-# 建置 Flutter 網頁版並發布到 GitHub Pages：
+# 建置 Flutter 網頁版並推到 gh-pages 分支，由 GitHub Pages 發布：
 #   https://e5525726e-bit.github.io/crownmine/
-# 免費方案的 GitHub Pages 只支援公開 repo。
+# 若沒有自動啟用，到 Settings → Pages → Source 選 gh-pages 分支。
 
 on:
   push:
@@ -10,16 +10,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -38,21 +36,13 @@ jobs:
             --pwa-strategy=none
           sed -i "s#__MAPS_API_KEY__#${KEY}#" build/web/index.html
           rm -f build/web/.last_build_id
-          # 讓 Flutter 的路由在重新整理時也能回到首頁
           cp build/web/index.html build/web/404.html
-      - uses: actions/configure-pages@v5
+          touch build/web/.nojekyll
+      - name: 推到 gh-pages 分支
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: build/web
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/web
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: 網頁版建置 ${{ github.sha }}
