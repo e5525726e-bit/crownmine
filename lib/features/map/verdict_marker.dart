@@ -61,7 +61,7 @@ class VerdictMarkerIcons {
   static final Map<String, PictureInfo> _tagPictures = {};
 
   /// 最多疊幾個附加標籤徽章（右上角留給評價數）。
-  static const int maxTagBadges = 3;
+  static const int maxTagBadges = 6;
 
   /// 依標記種類、評價數、這家店的特徵標籤取得圖示（同一組合只畫一次）。
   static Future<BitmapDescriptor> icon(Verdict v, int total,
@@ -231,14 +231,35 @@ class VerdictMarkerIcons {
       ..drawPicture(info.picture)
       ..restore();
 
-    // 附加標籤徽章：統一排在針頭左側，由上往下一排（右上留給評價數）。
-    // 標籤越多徽章越小，避免蓋住針頭。
-    final badgeScale = switch (badges.length) { 0 || 1 => 0.5, 2 => 0.42, _ => 0.36 };
-    final slots = switch (badges.length) {
-      0 || 1 => const [Offset(-0.72, -0.72)],
-      2 => const [Offset(-0.85, -0.6), Offset(-0.95, 0.28)],
-      _ => const [Offset(-0.8, -0.78), Offset(-1.0, 0.0), Offset(-0.8, 0.78)],
+    // 附加標籤徽章：1～3 個排在針頭左側一排；4 個以上環繞針頭排成一圈
+    // （右上角留給評價數）。標籤越多徽章越小，避免蓋住針頭。
+    final n = badges.length;
+    final badgeScale = switch (n) {
+      0 || 1 => 0.5,
+      2 => 0.42,
+      3 => 0.36,
+      4 => 0.33,
+      5 => 0.30,
+      _ => 0.28,
     };
+    final List<Offset> slots;
+    if (n <= 1) {
+      slots = const [Offset(-0.72, -0.72)];
+    } else if (n == 2) {
+      slots = const [Offset(-0.85, -0.6), Offset(-0.95, 0.28)];
+    } else if (n == 3) {
+      slots = const [Offset(-0.8, -0.78), Offset(-1.0, 0.0), Offset(-0.8, 0.78)];
+    } else {
+      // 從左上（-135°）沿左、下、右繞到右邊（0°），避開右上的評價數
+      const startDeg = -135.0, spanDeg = 225.0;
+      slots = [
+        for (var i = 0; i < n; i++)
+          () {
+            final a = (startDeg - spanDeg * i / (n - 1)) * math.pi / 180;
+            return Offset(math.cos(a), math.sin(a)) * 1.0;
+          }(),
+      ];
+    }
     for (var i = 0; i < badges.length; i++) {
       final pic = badges[i];
       final r = outerR * badgeScale;
