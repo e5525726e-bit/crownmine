@@ -19,7 +19,6 @@ import '../../widgets/category_chips.dart';
 import '../../widgets/google_attribution.dart';
 import '../../widgets/inset_group.dart';
 import '../../widgets/storefront_photo.dart';
-import '../../widgets/place_thumbnail.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/verdict_icon.dart';
 import '../../widgets/verdict_summary.dart';
@@ -897,7 +896,13 @@ class _MapScreenState extends State<MapScreen> {
     final d = _distanceTo(p.lat, p.lng);
     final stats = _statsById[p.id];
     return ListTile(
-      leading: PlaceThumbnail(p, size: 44),
+      // 清單不放照片（省流量也省額度）；照片在點開的視窗與店家頁才顯示
+      leading: SizedBox(
+        width: 32,
+        height: 32,
+        child: Icon(Icons.restaurant,
+            size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
       title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(
         [
