@@ -15,16 +15,19 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-// 每日上限 [免費, 付費]，防濫用用；未登入以 IP 計，額度同免費
+// 每日上限
+// - 個人（[免費, 付費]）：點開店家、附近搜尋、照片；未登入以 IP 計，額度同免費
+// - 搜尋／地圖列店家：個人不限，改用「全站總量」保護帳單，另有每 IP 防機器人上限
 const LIMITS: Record<string, [number, number]> = {
-  search: [800, 3000],
-  details: [500, 2000],
+  details: [100, 500],
   nearby: [300, 1000],
   photo: [1500, 8000],
 };
+const GLOBAL_LIMITS: Record<string, number> = { search: 300 };
+const IP_LIMITS: Record<string, number> = { search: 2000 };
 const LOGIN_REQUIRED = new Set<string>();
 const UPGRADE_HINT: Record<string, string> = {
-  search: "今日搜尋次數已達上限，明天再試",
+  search: "今天全站看地圖與搜尋的次數已達上限，明天再試（有評價的店還是看得到）",
   details: "今日查詢次數已達上限，明天再試",
   nearby: "今日查看附近餐飲店的次數已達上限，明天再試",
   photo: "今日照片瀏覽次數已達上限，明天再試",
@@ -81,6 +84,15 @@ async function callerOf(req: Request): Promise<Caller> {
 async function gate(req: Request, feature: string): Promise<Response | null> {
   const caller = await callerOf(req);
   if (LOGIN_REQUIRED.has(feature) && !caller.signedIn) return fail("請先登入才能使用這個功能", 401);
+  if (feature in GLOBAL_LIMITS) {
+    // 先擋機器人（每 IP），再看全站總量
+    const ip = (req.headers.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
+    const { data: ipOk } = await admin.rpc("bump_usage", { p_subject: `ip:${ip}:${feature}`, p_limit: IP_LIMITS[feature] });
+    if (ipOk === false) return fail("這個網路今天的查詢次數過多，明天再試", 429);
+    const { data: allOk } = await admin.rpc("bump_usage", { p_subject: `global:${feature}`, p_limit: GLOBAL_LIMITS[feature] });
+    if (allOk === false) return fail(UPGRADE_HINT[feature], 429);
+    return null;
+  }
   const limit = LIMITS[feature][caller.plan === "pro" ? 1 : 0];
   const { data: allowed } = await admin.rpc("bump_usage", { p_subject: `${caller.subject}:${feature}`, p_limit: limit });
   if (allowed === false) return fail(UPGRADE_HINT[feature], 429);

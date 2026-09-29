@@ -360,8 +360,14 @@ class _MapScreenState extends State<MapScreen> {
         maxLng: b.northeast.longitude,
       );
       final zoomedOut = zoom < _minZoomForAllPlaces;
-      final nearbyFuture =
-          zoomedOut ? Future.value(<Place>[]) : _nearbyIn(b, zoom);
+      // 範圍內店家查不到（例如當天全站額度用完）時，有評價的針照常顯示
+      String? nearbyError;
+      final nearbyFuture = zoomedOut
+          ? Future.value(<Place>[])
+          : _nearbyIn(b, zoom).catchError((Object e) {
+              nearbyError = friendlyError(e);
+              return <Place>[];
+            });
       final places = (await reviewedFuture)
           .where((p) => _matches(p.types, p.primaryType, p.name))
           .toList();
@@ -422,6 +428,7 @@ class _MapScreenState extends State<MapScreen> {
         _reviewedInView = places;
         _nearbyInView = nearby;
         _loading = false;
+        _error = nearbyError;
       });
     } catch (e) {
       if (!mounted) return;
