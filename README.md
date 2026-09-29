@@ -77,7 +77,8 @@ test/                                模型測試與畫面 smoke test
 
 ### 1. 安裝 Flutter
 
-依照 <https://docs.flutter.dev/get-started/install> 安裝 Flutter（stable）。
+Windows 使用者請直接看 [SETUP-windows.md](SETUP-windows.md)，有一鍵安裝腳本。
+其他平台依照 <https://docs.flutter.dev/get-started/install> 安裝 Flutter（stable）。
 - 要跑 Android：安裝 Android Studio（含 Android SDK）。
 - 要跑 iPhone：需要 Mac 並安裝 Xcode。
 
