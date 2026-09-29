@@ -18,6 +18,17 @@ const Set<String> kFoodTypes = {
   'sandwich_shop',
   'steak_house',
   'diner',
+  'noodle_shop',
+  'food',
+  'bar_and_grill',
+  'cafeteria',
+  'food_store',
+  'confectionery',
+  'donut_shop',
+  'bagel_shop',
+  'acai_shop',
+  'chocolate_shop',
+  'candy_store',
 };
 
 bool isFoodPlace(List<String> types, String? primaryType) {
