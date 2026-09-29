@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -10,25 +11,28 @@ import '../../models/verdict.dart';
 /// 大頭針針頭的基準直徑（邏輯像素）。之後要調整尺寸改這裡即可。
 const double kPinHeadSize = 26;
 
-/// 評價越多，大頭針越大、越「浮」：三個層級。
-enum MarkerTier {
-  small(1.0, false), // 1–2 則
-  medium(1.2, true), // 3–9 則
-  large(1.45, true); // 10 則以上
-
-  const MarkerTier(this.scale, this.showCount);
+/// 評價越多，大頭針越大、越「浮」。
+/// 放大倍率隨評價數連續變化（對數）：1 則 1.0、10 則 1.25、100 則 1.5，最大 1.75。
+class MarkerTier {
+  const MarkerTier._(this.scale, this.showCount);
 
   /// 針頭放大倍率
   final double scale;
 
-  /// 是否顯示評價數徽章
+  /// 是否顯示評價數徽章（3 則以上）
   final bool showCount;
 
-  static MarkerTier forCount(int total) {
-    if (total >= 10) return MarkerTier.large;
-    if (total >= 3) return MarkerTier.medium;
-    return MarkerTier.small;
+  static const double minScale = 1.0;
+  static const double maxScale = 1.75;
+
+  static double scaleFor(int total) {
+    if (total <= 1) return minScale;
+    return (minScale + 0.25 * math.log(total) / math.ln10)
+        .clamp(minScale, maxScale);
   }
+
+  static MarkerTier forCount(int total) =>
+      MarkerTier._(scaleFor(total), total >= 3);
 }
 
 /// 把四種標記畫成 Google 地圖那種「大頭針」：
@@ -65,7 +69,7 @@ class VerdictMarkerIcons {
     final tier = MarkerTier.forCount(total);
     final badges = tags.take(maxTagBadges).toList();
     final key =
-        '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}-${badges.map((t) => t.dbValue).join(',')}';
+        '${v.dbValue}-$total-${badges.map((t) => t.dbValue).join(',')}';
     return _cache[key] ??= await _render(v, tier, total, badges);
   }
 
@@ -251,7 +255,11 @@ class VerdictMarkerIcons {
 
     // 評價數徽章（右上角）
     if (tier.showCount) {
-      final label = total > 99 ? '99+' : '$total';
+      final label = total >= 10000
+          ? '${(total / 1000).floor()}k'
+          : total >= 1000
+              ? '${(total / 1000).toStringAsFixed(1)}k'
+              : '$total';
       final tp = TextPainter(
         text: TextSpan(
           text: label,
