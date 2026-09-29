@@ -86,6 +86,7 @@ class _SignedIn extends StatefulWidget {
 
 class _SignedInState extends State<_SignedIn> {
   late Future<String?> _name = reviewRepo.myDisplayName();
+  late Future<int> _count = reviewRepo.myReviews().then((r) => r.length);
 
   Future<void> _rename() async {
     final current = await _name;
@@ -152,10 +153,19 @@ class _SignedInState extends State<_SignedIn> {
             ListTile(
               leading: const Icon(CupertinoIcons.chat_bubble_2_fill),
               title: const Text('我的評價'),
-              trailing: const Chevron(),
-              onTap: () => Navigator.of(context).push(
-                CupertinoPageRoute(builder: (_) => const MyReviewsScreen()),
+              subtitle: FutureBuilder<int>(
+                future: _count,
+                builder: (_, snap) => Text(
+                  snap.hasData ? '已寫 ${snap.data} 則' : '…',
+                ),
               ),
+              trailing: const Chevron(),
+              onTap: () async {
+                await Navigator.of(context).push(
+                  CupertinoPageRoute(builder: (_) => const MyReviewsScreen()),
+                );
+                setState(() => _count = reviewRepo.myReviews().then((r) => r.length));
+              },
             ),
           ],
         ),

@@ -14,6 +14,14 @@ class Env {
     defaultValue: 'support@example.com',
   );
 
+  /// 網頁版網址，用來產生店家分享連結。
+  static const webBaseUrl = String.fromEnvironment(
+    'WEB_BASE_URL',
+    defaultValue: 'https://e5525726e-bit.github.io/crownmine/',
+  );
+
+  static String placeShareUrl(String placeId) => '$webBaseUrl?place=$placeId';
+
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 }

@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/apple_bars.dart';
+import '../../config/env.dart';
 import '../../di.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
+import '../../models/verdict.dart';
 import '../../widgets/apple_dialogs.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/google_attribution.dart';
@@ -86,7 +89,56 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
       builder: (_) => WriteReviewScreen(place: place, existing: existing),
       fullscreenDialog: true,
     ));
-    if (saved == true) _reload();
+    if (saved != true) return;
+    _reload();
+    if (existing == null) _celebrateIfFirst();
+  }
+
+  /// 第一則評價的小鼓勵，之後每 10 則再提醒一次。
+  Future<void> _celebrateIfFirst() async {
+    final count = (await reviewRepo.myReviews()).length;
+    if (!mounted) return;
+    final String? title = switch (count) {
+      1 => '你的第一則評價！',
+      _ when count % 10 == 0 => '已經寫了 $count 則評價！',
+      _ => null,
+    };
+    if (title == null) return;
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(title),
+        content: const Padding(
+          padding: EdgeInsets.only(top: 6),
+          child: Text('謝謝你留下真實的意見。把這家店分享給朋友，讓更多人知道。'),
+        ),
+        actions: [
+          CupertinoDialogAction(onPressed: () => Navigator.pop(ctx), child: const Text('好')),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(ctx);
+              _share();
+            },
+            child: const Text('分享'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _share() async {
+    final d = await _future;
+    final s = d.stats;
+    final parts = [
+      for (final v in Verdict.values)
+        if (s.count(v) > 0) '${v.label} ${s.count(v)}',
+    ];
+    final summary = parts.isEmpty ? '還沒有人評價，來當第一個' : parts.join('、');
+    await SharePlus.instance.share(ShareParams(
+      title: '${d.place.name}｜美食地圖',
+      text: '「${d.place.name}」在美食地圖上的評價：$summary\n${Env.placeShareUrl(d.place.id)}',
+    ));
   }
 
   Future<void> _report(Review r) async {
@@ -148,6 +200,12 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           extendBody: true,
           appBar: AppleAppBar(
             title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+            actions: [
+              CupertinoButton(
+                onPressed: _share,
+                child: const Icon(CupertinoIcons.share),
+              ),
+            ],
           ),
           // 主要動作放在底部材質列（iOS 慣例），而不是浮動按鈕
           bottomNavigationBar: AppleBottomBar(

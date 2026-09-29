@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../place/place_detail_screen.dart';
+
 import '../map/map_screen.dart';
 import '../nearby/nearby_screen.dart';
 import '../profile/profile_screen.dart';
@@ -15,6 +17,20 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 分享連結（網頁版）：?place=<place_id> 直接開店家頁
+    final placeId = Uri.base.queryParameters['place'];
+    if (placeId != null && placeId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).push(CupertinoPageRoute(
+          builder: (_) => PlaceDetailScreen(placeId: placeId),
+        ));
+      });
+    }
+  }
 
   static const _pages = [
     SearchScreen(),
