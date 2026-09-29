@@ -1,0 +1,43 @@
+name: Supabase 執行 SQL
+
+# 對已建立的 Supabase 專案執行指定的 migration 檔（每個檔案各自一次交易）。
+on:
+  workflow_dispatch:
+    inputs:
+      supabase_access_token:
+        description: 'Supabase Personal Access Token（sbp_ 開頭）'
+        required: true
+      files:
+        description: '要執行的 SQL 檔，逗號分隔（相對 supabase/migrations/）'
+        required: true
+        default: '0002a_add_verdicts.sql,0002b_rebuild_stats.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 執行
+        env:
+          TOKEN: ${{ inputs.supabase_access_token }}
+          FILES: ${{ inputs.files }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$TOKEN"
+          ref=$(jq -r .SUPABASE_URL dart_defines.json | sed -E 's#https://([^.]+)\.supabase\.co#\1#')
+          IFS=',' read -ra list <<< "$FILES"
+          for f in "${list[@]}"; do
+            f=$(echo "$f" | xargs)
+            echo "==> $f"
+            result=$(curl -sS -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -X POST "https://api.supabase.com/v1/projects/$ref/database/query" \
+              -d "$(jq -n --rawfile q "supabase/migrations/$f" '{query:$q}')")
+            if echo "$result" | jq -e 'type=="object" and .message' >/dev/null 2>&1; then
+              echo "::error::$f 失敗：$(echo "$result" | jq -r '.message')"; exit 1
+            fi
+            echo "  完成"
+          done

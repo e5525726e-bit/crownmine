@@ -36,27 +36,37 @@ class VerdictSummary extends StatelessWidget {
     }
 
     final text = Theme.of(context).textTheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final v in Verdict.values)
-          Expanded(
-            child: Column(
-              children: [
-                VerdictIcon(v, size: 40),
-                const SizedBox(height: 4),
-                Text('${stats.count(v)}',
-                    style: text.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold, color: v.color)),
-                Text(v.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.labelSmall),
-              ],
-            ),
-          ),
-      ],
+    // 六種標記：每列三個
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = c.maxWidth / 3;
+        return Wrap(
+          runSpacing: 12,
+          children: [
+            for (final v in Verdict.values)
+              SizedBox(
+                width: w,
+                child: Column(
+                  children: [
+                    VerdictIcon(v, size: 36),
+                    const SizedBox(height: 4),
+                    Text('${stats.count(v)}',
+                        style: text.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold, color: v.color)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(v.label,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.labelSmall),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

@@ -5,14 +5,18 @@
 目前狀態：**開發中，尚未上架**。程式碼可通過 `flutter analyze` 與 `flutter test`，
 需要接上你自己的 Google 與 Supabase 帳號才能在手機上跑起來（步驟見下方）。
 
-## 四種評價標記
+## 六種評價標記
 
 | 標記 | 意思 | 圖案 |
 |---|---|---|
 | 皇冠 | 真心推薦 | `assets/icons/crown.svg` |
+| 相機 | 網美店：拍照好看，重點不在吃 | `assets/icons/camera.svg` |
 | 綠燈（紅綠燈造型） | 普通中規中矩 | `assets/icons/green_light.svg` |
 | 地雷 | 普通又貴 | `assets/icons/landmine.svg` |
+| 禁止圈＋相機 App | IG 推薦但不推：網路很紅，實際普通 | `assets/icons/igtrap.svg` |
 | 大便 | 難吃／態度環境很差 | `assets/icons/poop.svg` |
+
+已上線的資料庫要加新標記時，執行 Actions → **Supabase 執行 SQL**（預設會跑 `0002a`、`0002b`）。
 
 圖案目前是簡易向量圖，之後可以直接換成設計師畫的 SVG，檔名不變即可。
 

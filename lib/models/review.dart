@@ -85,21 +85,25 @@ class ReviewedPlace {
       );
 }
 
-/// 一家店的四種標記各有幾個。
+/// 一家店的六種標記各有幾個。
 class PlaceStats {
   const PlaceStats({
     this.crowns = 0,
+    this.cameras = 0,
     this.greens = 0,
     this.mines = 0,
+    this.igtraps = 0,
     this.poops = 0,
   });
 
   final int crowns;
+  final int cameras;
   final int greens;
   final int mines;
+  final int igtraps;
   final int poops;
 
-  int get total => crowns + greens + mines + poops;
+  int get total => crowns + cameras + greens + mines + igtraps + poops;
 
   /// 最多人給的標記；平手時依 [Verdict.values] 的順序（皇冠優先）。
   Verdict? get dominant {
@@ -113,15 +117,19 @@ class PlaceStats {
 
   int count(Verdict v) => switch (v) {
         Verdict.crown => crowns,
+        Verdict.camera => cameras,
         Verdict.green => greens,
         Verdict.mine => mines,
+        Verdict.igtrap => igtraps,
         Verdict.poop => poops,
       };
 
   factory PlaceStats.fromRow(Map<String, dynamic>? r) => PlaceStats(
         crowns: (r?['crowns'] as num?)?.toInt() ?? 0,
+        cameras: (r?['cameras'] as num?)?.toInt() ?? 0,
         greens: (r?['greens'] as num?)?.toInt() ?? 0,
         mines: (r?['mines'] as num?)?.toInt() ?? 0,
+        igtraps: (r?['igtraps'] as num?)?.toInt() ?? 0,
         poops: (r?['poops'] as num?)?.toInt() ?? 0,
       );
 }

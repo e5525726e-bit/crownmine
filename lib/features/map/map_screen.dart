@@ -228,28 +228,31 @@ class _Legend extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                for (final v in Verdict.values)
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        VerdictIcon(v, size: 18),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(v.label, style: text, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ),
-                      ],
+            LayoutBuilder(
+              builder: (context, c) => Wrap(
+                runSpacing: 4,
+                children: [
+                  for (final v in Verdict.values)
+                    SizedBox(
+                      width: c.maxWidth / 3,
+                      child: Row(
+                        children: [
+                          VerdictIcon(v, size: 16),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(v.label, style: text, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                if (loading)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-                  ),
-              ],
+                ],
+              ),
             ),
+            if (loading)
+              const Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
             if (error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),

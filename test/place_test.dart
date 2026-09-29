@@ -43,14 +43,18 @@ void main() {
       expect(Verdict.fromDb(v.dbValue), v);
     }
     expect(Verdict.mine.isNegative, isTrue);
+    expect(Verdict.igtrap.isNegative, isTrue);
+    expect(Verdict.camera.isNegative, isFalse);
     expect(Verdict.poop.isNegative, isTrue);
     expect(Verdict.crown.isNegative, isFalse);
     expect(Verdict.green.isNegative, isFalse);
   });
 
-  test('PlaceStats 四種計數', () {
-    final s = PlaceStats.fromRow({'crowns': 3, 'greens': 2, 'mines': 1, 'poops': 0});
-    expect(s.total, 6);
+  test('PlaceStats 六種計數', () {
+    final s = PlaceStats.fromRow({'crowns': 3, 'greens': 2, 'mines': 1, 'poops': 0, 'cameras': 4, 'igtraps': 1});
+    expect(s.total, 11);
+    expect(s.count(Verdict.camera), 4);
+    expect(s.count(Verdict.igtrap), 1);
     expect(s.count(Verdict.crown), 3);
     expect(s.count(Verdict.green), 2);
     expect(s.count(Verdict.mine), 1);
@@ -63,6 +67,7 @@ void _dominantTests() {
     expect(const PlaceStats().dominant, isNull);
     expect(const PlaceStats(crowns: 1, poops: 4).dominant, Verdict.poop);
     expect(const PlaceStats(crowns: 2, mines: 2).dominant, Verdict.crown);
+    expect(const PlaceStats(cameras: 5, crowns: 1).dominant, Verdict.camera);
     expect(const PlaceStats(greens: 3, mines: 1).dominant, Verdict.green);
   });
 }
