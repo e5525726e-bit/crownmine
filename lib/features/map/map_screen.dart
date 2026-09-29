@@ -360,7 +360,8 @@ class _MapScreenState extends State<MapScreen> {
         maxLng: b.northeast.longitude,
       );
       final zoomedOut = zoom < _minZoomForAllPlaces;
-      final nearbyFuture = zoomedOut ? Future.value(<Place>[]) : _nearbyIn(b);
+      final nearbyFuture =
+          zoomedOut ? Future.value(<Place>[]) : _nearbyIn(b, zoom);
       final places = (await reviewedFuture)
           .where((p) => _matches(p.types, p.primaryType, p.name))
           .toList();
@@ -431,22 +432,25 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// 列出畫面範圍內的餐飲店：用文字搜尋限制在可視矩形內，最多 3 頁（60 家）。
-  /// 比「附近搜尋」（一次只有 20 家、且集中在畫面中心）能列出更多店。
-  Future<List<Place>> _nearbyIn(LatLngBounds b) {
-    // 避免快取鍵太碎：範圍四捨五入到約 100 公尺
-    double r3(double v) => (v * 1000).roundToDouble() / 1000;
+  /// 列出畫面範圍內的餐飲店：用文字搜尋限制在可視矩形內。
+  /// - 範圍先「對齊到約 500 公尺的格子」再往外擴：在同一格內小幅移動地圖會命中快取，不算次數
+  /// - 放得越大頁數越少（每頁 20 家、各算一次 Google 呼叫）
+  Future<List<Place>> _nearbyIn(LatLngBounds b, double zoom) {
+    const grid = 0.005; // 約 500 公尺
+    double down(double v) => (v / grid).floor() * grid;
+    double up(double v) => (v / grid).ceil() * grid;
     final rect = (
-      minLat: r3(b.southwest.latitude),
-      minLng: r3(b.southwest.longitude),
-      maxLat: r3(b.northeast.latitude),
-      maxLng: r3(b.northeast.longitude),
+      minLat: down(b.southwest.latitude),
+      minLng: down(b.southwest.longitude),
+      maxLat: up(b.northeast.latitude),
+      maxLng: up(b.northeast.longitude),
     );
+    final pages = zoom >= 17 ? 1 : (zoom >= 16 ? 2 : 3);
     return placesService.searchText(
       _category.isAll ? '餐廳' : _category.keyword,
       rect: rect,
       type: 'any',
-      pages: 3,
+      pages: pages,
       // 飲料店 Google 常沒有餐飲類型，其餘種類仍只留餐飲業
       strict: _category != FoodCategory.drink,
     );
