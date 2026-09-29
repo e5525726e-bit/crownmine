@@ -232,11 +232,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                   border: OutlineInputBorder(),
                   alignLabelWithHint: true,
                 ),
-                validator: (v) {
-                  final t = (v ?? '').trim();
-                  if (t.length < 10) return '至少寫 10 個字，讓其他人看得懂';
-                  return null;
-                },
+                validator: (v) =>
+                    (v ?? '').trim().length > 2000 ? '最多 2000 字' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
