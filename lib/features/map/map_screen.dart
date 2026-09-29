@@ -187,11 +187,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _pickCity() async {
-    final picked = await showModalBottomSheet<Object>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => PointerInterceptor(
-          child: ListView(
+    final picked = await _showSheet<Object>(
+      (context) => ListView(
+        shrinkWrap: true,
         children: [
           ListTile(
             leading: const Icon(CupertinoIcons.location_fill),
@@ -217,7 +215,7 @@ class _MapScreenState extends State<MapScreen> {
               onTap: () => Navigator.pop(context, c),
             ),
         ],
-      )),
+      ),
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -481,6 +479,62 @@ class _MapScreenState extends State<MapScreen> {
       m < 1000 ? '${m.round()} 公尺' : '${(m / 1000).toStringAsFixed(1)} 公里';
 
   // ------------------------------------------------------------- 開店家
+  /// 從底部彈出的視窗（網頁版整個畫面都罩住，拖動、點空白處都不會動到底下的地圖）。
+  Future<T?> _showSheet<T>(Widget Function(BuildContext ctx) content) {
+    return showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      showDragHandle: false,
+      builder: (ctx) => PointerInterceptor(
+        child: Column(
+          children: [
+            // 上方空白：點一下關閉
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Navigator.pop(ctx),
+                child: const SizedBox.expand(),
+              ),
+            ),
+            Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(ctx).height * 0.85),
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).cardTheme.color ??
+                    Theme.of(ctx).colorScheme.surface,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 4),
+                      width: 36,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Theme.of(ctx)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  Flexible(child: content(ctx)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _open(String placeId, {Place? initial}) {
     Navigator.of(context).push(CupertinoPageRoute(
       builder: (_) => PlaceDetailScreen(placeId: placeId, initial: initial),
@@ -510,15 +564,15 @@ class _MapScreenState extends State<MapScreen> {
       );
 
   void _showUnreviewed(Place p) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => PointerInterceptor(
+    _showSheet<void>(
+      (ctx) => SingleChildScrollView(
         child: SafeArea(
+          top: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 8),
               _photoSection(p.id, known: p.photos),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
@@ -557,15 +611,15 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _showPlace(ReviewedPlace p) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => PointerInterceptor(
+    _showSheet<void>(
+      (ctx) => SingleChildScrollView(
         child: SafeArea(
+          top: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 8),
               _photoSection(p.placeId),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),

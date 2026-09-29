@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import '../di.dart';
 import '../models/place.dart';
@@ -49,6 +51,11 @@ class StorefrontPhoto extends StatelessWidget {
                             color: scheme.onSurfaceVariant),
                       ),
                     ),
+                    // 網頁版原生 <img> 會吃掉觸控：蓋一層攔截讓拖動仍由 App 處理
+                    if (kIsWeb)
+                      Positioned.fill(
+                          child: PointerInterceptor(
+                              child: const SizedBox.expand())),
                     if (p.attributions.isNotEmpty)
                       Positioned(
                         right: 8,
