@@ -119,11 +119,10 @@ class Place {
       photos: ((j['photos'] as List?) ?? const [])
           .map((p) => PlacePhoto.fromJson(p as Map<String, dynamic>))
           .toList(),
-      weekdayDescriptions:
-          (((j['regularOpeningHours'] as Map<String, dynamic>?)?['weekdayDescriptions']
-                      as List?) ??
-                  const [])
-              .cast<String>(),
+      weekdayDescriptions: (((j['regularOpeningHours']
+                  as Map<String, dynamic>?)?['weekdayDescriptions'] as List?) ??
+              const [])
+          .cast<String>(),
       phone: j['nationalPhoneNumber'] as String?,
       website: j['websiteUri'] as String?,
     );

@@ -30,7 +30,8 @@ class _NearbyScreenState extends State<NearbyScreen> {
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
     }
-    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
       throw Exception('需要定位權限才能找附近的餐廳，請到系統設定開啟');
     }
     final pos = await Geolocator.getCurrentPosition(
@@ -57,7 +58,8 @@ class _NearbyScreenState extends State<NearbyScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Row(
                 children: [
-                  Expanded(child: Text('附近餐廳', style: theme.textTheme.displayLarge)),
+                  Expanded(
+                      child: Text('附近餐廳', style: theme.textTheme.displayLarge)),
                   CupertinoButton(
                     padding: EdgeInsets.zero,
                     onPressed: _refresh,
@@ -73,13 +75,16 @@ class _NearbyScreenState extends State<NearbyScreen> {
                 child: CupertinoSlidingSegmentedControl<double>(
                   groupValue: _radius,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  thumbColor: (theme.cardTheme.color ?? theme.colorScheme.surface),
+                  thumbColor:
+                      (theme.cardTheme.color ?? theme.colorScheme.surface),
                   children: {
                     for (final r in const [500.0, 1000.0, 2000.0])
                       r: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Text(
-                          r >= 1000 ? '${(r / 1000).toStringAsFixed(0)} 公里' : '${r.toInt()} 公尺',
+                          r >= 1000
+                              ? '${(r / 1000).toStringAsFixed(0)} 公里'
+                              : '${r.toInt()} 公尺',
                           style: theme.textTheme.titleSmall,
                         ),
                       ),
@@ -126,8 +131,10 @@ class _NearbyScreenState extends State<NearbyScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         trailing: const Chevron(),
-                        onTap: () => Navigator.of(context).push(CupertinoPageRoute(
-                          builder: (_) => PlaceDetailScreen(placeId: p.id, initial: p),
+                        onTap: () =>
+                            Navigator.of(context).push(CupertinoPageRoute(
+                          builder: (_) =>
+                              PlaceDetailScreen(placeId: p.id, initial: p),
                         )),
                       );
                     },

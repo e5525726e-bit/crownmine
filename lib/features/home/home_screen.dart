@@ -16,7 +16,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
-  static const _pages = [SearchScreen(), MapScreen(), NearbyScreen(), ProfileScreen()];
+  static const _pages = [
+    SearchScreen(),
+    MapScreen(),
+    NearbyScreen(),
+    ProfileScreen()
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +34,19 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         // 半透明時 CupertinoTabBar 會自動加毛玻璃
-        backgroundColor: (theme.cardTheme.color ?? theme.colorScheme.surface).withValues(alpha: 0.75),
+        backgroundColor: (theme.cardTheme.color ?? theme.colorScheme.surface)
+            .withValues(alpha: 0.75),
         activeColor: theme.colorScheme.primary,
         inactiveColor: theme.colorScheme.onSurfaceVariant,
         border: Border(top: BorderSide(color: theme.dividerColor, width: 0.5)),
         items: const [
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.search), label: '搜尋'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.search), label: '搜尋'),
           BottomNavigationBarItem(icon: Icon(CupertinoIcons.map), label: '地圖'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.location), label: '附近'),
-          BottomNavigationBarItem(icon: Icon(CupertinoIcons.person), label: '我的'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.location), label: '附近'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.person), label: '我的'),
         ],
       ),
     );

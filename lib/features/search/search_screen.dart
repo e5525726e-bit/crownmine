@@ -81,7 +81,8 @@ class _SearchScreenState extends State<SearchScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: CupertinoSearchTextField(
                 controller: _controller,
-                placeholder: _mode == _Mode.google ? '店名或地區，例如「台中 火鍋」' : '搜尋已有評價的店家',
+                placeholder:
+                    _mode == _Mode.google ? '店名或地區，例如「台中 火鍋」' : '搜尋已有評價的店家',
                 onSubmitted: _submit,
                 onSuffixTap: () {
                   _controller.clear();
@@ -98,7 +99,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: CupertinoSlidingSegmentedControl<_Mode>(
                   groupValue: _mode,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  thumbColor: (theme.cardTheme.color ?? theme.colorScheme.surface),
+                  thumbColor:
+                      (theme.cardTheme.color ?? theme.colorScheme.surface),
                   children: {
                     _Mode.google: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -152,7 +154,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                trailing: p.isClosedPermanently ? const Chip(label: Text('已歇業')) : const Chevron(),
+                trailing: p.isClosedPermanently
+                    ? const Chip(label: Text('已歇業'))
+                    : const Chevron(),
                 onTap: () => _open(p.id, initial: p),
               );
             },
@@ -185,10 +189,14 @@ class _SearchScreenState extends State<SearchScreen> {
               final r = items[i];
               return ListTile(
                 title: Text(r.name),
-                subtitle: Text(r.address, maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: Text(r.address,
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [VerdictSummary(r.stats, compact: true), const Chevron()],
+                  children: [
+                    VerdictSummary(r.stats, compact: true),
+                    const Chevron()
+                  ],
                 ),
                 onTap: () => _open(r.placeId),
               );
@@ -210,7 +218,9 @@ class _Hint extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 44, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Icon(icon,
+                  size: 44,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(height: 12),
               Text(text,
                   textAlign: TextAlign.center,

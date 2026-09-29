@@ -41,7 +41,8 @@ class InsetListView extends StatelessWidget {
             top: first ? const Radius.circular(12) : Radius.zero,
             bottom: last ? const Radius.circular(12) : Radius.zero,
           ),
-          child: Material(color: theme.cardTheme.color, child: itemBuilder(context, i)),
+          child: Material(
+              color: theme.cardTheme.color, child: itemBuilder(context, i)),
         );
       },
     );

@@ -92,7 +92,8 @@ class ReviewCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(r.verdict.label,
-                          style: text.titleMedium?.copyWith(color: r.verdict.color)),
+                          style: text.titleMedium
+                              ?.copyWith(color: r.verdict.color)),
                       Text(
                         '${r.authorName} · ${fmtRelative(r.createdAt)}'
                         '${isMine ? '（我）' : ''}',
@@ -105,7 +106,8 @@ class ReviewCard extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(44, 44),
                   onPressed: () => _showActions(context),
-                  child: Icon(CupertinoIcons.ellipsis, color: theme.colorScheme.onSurfaceVariant),
+                  child: Icon(CupertinoIcons.ellipsis,
+                      color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -114,7 +116,10 @@ class ReviewCard extends StatelessWidget {
               padding: const EdgeInsets.only(right: 8),
               child: Text(r.body, style: text.bodyLarge),
             ),
-            if (r.pricePaid != null || r.visitedOn != null || r.hasReceipt || r.tags.isNotEmpty)
+            if (r.pricePaid != null ||
+                r.visitedOn != null ||
+                r.hasReceipt ||
+                r.tags.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Wrap(
@@ -122,10 +127,17 @@ class ReviewCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     for (final t in r.tags)
-                      _Tag(null, t.label, leading: TagIcon(t, size: 16), color: t.color),
-                    if (r.pricePaid != null) _Tag(CupertinoIcons.money_dollar_circle, '每人約 \$${r.pricePaid}'),
-                    if (r.visitedOn != null) _Tag(CupertinoIcons.calendar, '${fmtDate(r.visitedOn!)} 造訪'),
-                    if (r.hasReceipt) _Tag(CupertinoIcons.checkmark_seal_fill, '附消費證明', accent: true),
+                      _Tag(null, t.label,
+                          leading: TagIcon(t, size: 16), color: t.color),
+                    if (r.pricePaid != null)
+                      _Tag(CupertinoIcons.money_dollar_circle,
+                          '每人約 \$${r.pricePaid}'),
+                    if (r.visitedOn != null)
+                      _Tag(CupertinoIcons.calendar,
+                          '${fmtDate(r.visitedOn!)} 造訪'),
+                    if (r.hasReceipt)
+                      _Tag(CupertinoIcons.checkmark_seal_fill, '附消費證明',
+                          accent: true),
                   ],
                 ),
               ),
@@ -140,7 +152,8 @@ class ReviewCard extends StatelessWidget {
                     separatorBuilder: (_, __) => const SizedBox(width: 6),
                     itemBuilder: (_, i) => ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.network(r.photoUrls[i], width: 96, height: 96, fit: BoxFit.cover),
+                      child: Image.network(r.photoUrls[i],
+                          width: 96, height: 96, fit: BoxFit.cover),
                     ),
                   ),
                 ),
@@ -153,7 +166,8 @@ class ReviewCard extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag(this.icon, this.label, {this.accent = false, this.leading, this.color});
+  const _Tag(this.icon, this.label,
+      {this.accent = false, this.leading, this.color});
   final IconData? icon;
   final String label;
   final bool accent;
@@ -167,7 +181,9 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: (color != null || accent) ? fg.withValues(alpha: 0.12) : scheme.surfaceContainerHighest,
+        color: (color != null || accent)
+            ? fg.withValues(alpha: 0.12)
+            : scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -175,7 +191,9 @@ class _Tag extends StatelessWidget {
         children: [
           leading ?? Icon(icon, size: 14, color: fg),
           const SizedBox(width: 4),
-          Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: fg)),
+          Text(label,
+              style:
+                  Theme.of(context).textTheme.labelMedium?.copyWith(color: fg)),
         ],
       ),
     );

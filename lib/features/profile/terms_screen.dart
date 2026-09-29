@@ -38,10 +38,7 @@ class TermsScreen extends StatelessWidget {
       '你可以隨時在「我的」頁面刪除帳號，所有評價、照片與消費證明會一併刪除。'
           '消費證明照片僅供本 App 管理員審核使用，不會公開。'
     ),
-    (
-      '六、聯絡我們',
-      '任何問題請寄信到 ${Env.supportEmail}。'
-    ),
+    ('六、聯絡我們', '任何問題請寄信到 ${Env.supportEmail}。'),
   ];
 
   @override
@@ -50,26 +47,29 @@ class TermsScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: const AppleAppBar(title: Text('使用條款與社群規範')),
-      body: ListView(
-        padding: barInsets(context, top: 20, bottom: 24).add(const EdgeInsets.symmetric(horizontal: 16)),
-        children: [
-          for (final (title, body) in _sections)
-            Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: text.titleMedium),
-                    const SizedBox(height: 6),
-                    Text(body, style: text.bodyMedium),
-                  ],
+      body: Builder(
+        builder: (context) => ListView(
+          padding: barInsets(context, top: 20, bottom: 24)
+              .add(const EdgeInsets.symmetric(horizontal: 16)),
+          children: [
+            for (final (title, body) in _sections)
+              Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: text.titleMedium),
+                      const SizedBox(height: 6),
+                      Text(body, style: text.bodyMedium),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          Text('最後更新：2026 年 9 月', style: text.bodySmall),
-        ],
+            Text('最後更新：2026 年 9 月', style: text.bodySmall),
+          ],
+        ),
       ),
     );
   }

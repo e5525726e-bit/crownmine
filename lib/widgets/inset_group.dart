@@ -62,6 +62,9 @@ class Chevron extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Icon(
         Icons.chevron_right,
-        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+        color: Theme.of(context)
+            .colorScheme
+            .onSurfaceVariant
+            .withValues(alpha: 0.6),
       );
 }

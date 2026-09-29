@@ -6,7 +6,9 @@ class AppleBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!(ModalRoute.of(context)?.canPop ?? false)) return const SizedBox.shrink();
+    if (!(ModalRoute.of(context)?.canPop ?? false)) {
+      return const SizedBox.shrink();
+    }
     return const CupertinoNavigationBarBackButton();
   }
 }

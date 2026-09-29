@@ -26,12 +26,15 @@ class PressScale extends StatefulWidget {
   State<PressScale> createState() => _PressScaleState();
 }
 
-class _PressScaleState extends State<PressScale> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController.unbounded(vsync: this, value: 1);
+class _PressScaleState extends State<PressScale>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController.unbounded(vsync: this, value: 1);
 
   void _animateTo(double target) {
     // 從目前的呈現值與速度出發，不是從邏輯目標值
-    _c.animateWith(SpringSimulation(AppSprings.press, _c.value, target, _c.velocity));
+    _c.animateWith(
+        SpringSimulation(AppSprings.press, _c.value, target, _c.velocity));
   }
 
   void _down(TapDownDetails _) => _animateTo(widget.scale);
@@ -65,7 +68,8 @@ class _PressScaleState extends State<PressScale> with SingleTickerProviderStateM
             final t = ((1 - _c.value) / (1 - widget.scale)).clamp(0.0, 1.0);
             return Opacity(opacity: 1 - 0.35 * t, child: child);
           }
-          return Transform.scale(scale: _c.value.clamp(0.9, 1.05), child: child);
+          return Transform.scale(
+              scale: _c.value.clamp(0.9, 1.05), child: child);
         },
         child: widget.child,
       ),

@@ -33,8 +33,10 @@ class AppleTheme {
   static const double radius = 12;
 
   /// [fontFamily] 預設不指定，讓平台使用系統字型（iOS 為 SF Pro）。
-  static ThemeData light({String? fontFamily}) => _build(Brightness.light, fontFamily);
-  static ThemeData dark({String? fontFamily}) => _build(Brightness.dark, fontFamily);
+  static ThemeData light({String? fontFamily}) =>
+      _build(Brightness.light, fontFamily);
+  static ThemeData dark({String? fontFamily}) =>
+      _build(Brightness.dark, fontFamily);
 
   static ThemeData _build(Brightness b, String? fontFamily) {
     final isDark = b == Brightness.dark;
@@ -66,7 +68,9 @@ class AppleTheme {
     // iOS 文字層級（pt）：Large Title 34 / Title1 28 / Title2 22 / Title3 20 /
     // Headline 17 semibold / Body 17 / Callout 16 / Subhead 15 / Footnote 13 / Caption 12
     // iOS 文字層級（pt）。字級、字距、行距一起設定：大字負字距、緊行距；小字近零字距、鬆行距。
-    TextStyle t(double size, FontWeight w, double tracking, double lineHeight, Color color) => TextStyle(
+    TextStyle t(double size, FontWeight w, double tracking, double lineHeight,
+            Color color) =>
+        TextStyle(
           fontFamily: fontFamily,
           fontSize: size,
           fontWeight: w,
@@ -75,22 +79,24 @@ class AppleTheme {
           color: color,
         );
     final text = TextTheme(
-      displayLarge: t(34, FontWeight.w700, -0.4, 41, fg),   // Large Title
-      headlineLarge: t(28, FontWeight.w700, -0.3, 34, fg),  // Title 1
+      displayLarge: t(34, FontWeight.w700, -0.4, 41, fg), // Large Title
+      headlineLarge: t(28, FontWeight.w700, -0.3, 34, fg), // Title 1
       headlineMedium: t(22, FontWeight.w700, -0.2, 28, fg), // Title 2
       headlineSmall: t(22, FontWeight.w700, -0.2, 28, fg),
-      titleLarge: t(20, FontWeight.w600, -0.1, 25, fg),     // Title 3
-      titleMedium: t(17, FontWeight.w600, -0.2, 22, fg),    // Headline
-      titleSmall: t(15, FontWeight.w600, -0.1, 20, fg),     // Subheadline (semibold)
-      bodyLarge: t(17, FontWeight.w400, -0.2, 22, fg),      // Body
-      bodyMedium: t(15, FontWeight.w400, -0.1, 20, fg),     // Subheadline
-      bodySmall: t(13, FontWeight.w400, 0, 18, fg2),        // Footnote
+      titleLarge: t(20, FontWeight.w600, -0.1, 25, fg), // Title 3
+      titleMedium: t(17, FontWeight.w600, -0.2, 22, fg), // Headline
+      titleSmall:
+          t(15, FontWeight.w600, -0.1, 20, fg), // Subheadline (semibold)
+      bodyLarge: t(17, FontWeight.w400, -0.2, 22, fg), // Body
+      bodyMedium: t(15, FontWeight.w400, -0.1, 20, fg), // Subheadline
+      bodySmall: t(13, FontWeight.w400, 0, 18, fg2), // Footnote
       labelLarge: t(17, FontWeight.w600, -0.2, 22, fg),
       labelMedium: t(13, FontWeight.w500, 0, 18, fg2),
-      labelSmall: t(12, FontWeight.w400, 0.1, 16, fg2),     // Caption
+      labelSmall: t(12, FontWeight.w400, 0.1, 16, fg2), // Caption
     );
 
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
+    final shape =
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
 
     return ThemeData(
       useMaterial3: true,
@@ -158,14 +164,20 @@ class AppleTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: card,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: systemBlue, width: 1.5),
         ),
-        hintStyle: text.bodyLarge?.copyWith(color: isDark ? tertiaryLabelDark : tertiaryLabel),
+        hintStyle: text.bodyLarge
+            ?.copyWith(color: isDark ? tertiaryLabelDark : tertiaryLabel),
         labelStyle: text.bodyMedium?.copyWith(color: fg2),
         helperStyle: text.bodySmall,
       ),
@@ -180,7 +192,8 @@ class AppleTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: shape,
-        backgroundColor: isDark ? const Color(0xFF2C2C2E) : const Color(0xFF1C1C1E),
+        backgroundColor:
+            isDark ? const Color(0xFF2C2C2E) : const Color(0xFF1C1C1E),
         contentTextStyle: text.bodyMedium?.copyWith(color: Colors.white),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -192,7 +205,8 @@ class AppleTheme {
         showDragHandle: true,
       ),
       dialogTheme: DialogThemeData(backgroundColor: card, shape: shape),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(color: systemBlue),
+      progressIndicatorTheme:
+          const ProgressIndicatorThemeData(color: systemBlue),
       expansionTileTheme: ExpansionTileThemeData(
         backgroundColor: card,
         collapsedBackgroundColor: card,

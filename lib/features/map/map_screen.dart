@@ -30,7 +30,8 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  static const _taipei = CameraPosition(target: LatLng(25.0418, 121.5436), zoom: 13);
+  static const _taipei =
+      CameraPosition(target: LatLng(25.0418, 121.5436), zoom: 13);
 
   /// 放大到這個等級以上才向 Google 查詢範圍內所有餐飲店。
   static const double _minZoomForAllPlaces = 15;
@@ -59,7 +60,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _prepare() async {
-    final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+    final dpr =
+        WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
     await VerdictMarkerIcons.preload(dpr);
     _iconsReady = true;
     if (mounted) setState(() {});
@@ -74,13 +76,17 @@ class _MapScreenState extends State<MapScreen> {
         return;
       }
       var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
         if (!silent) _toast('需要定位權限才能移到目前位置，請到系統設定開啟');
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
       final here = LatLng(pos.latitude, pos.longitude);
       if (!mounted) return;
@@ -130,7 +136,9 @@ class _MapScreenState extends State<MapScreen> {
       final reviewedIds = {for (final p in places) p.placeId};
       final plain = await VerdictMarkerIcons.plainIcon();
       for (final p in nearby) {
-        if (reviewedIds.contains(p.id) || p.lat == null || p.lng == null) continue;
+        if (reviewedIds.contains(p.id) || p.lat == null || p.lng == null) {
+          continue;
+        }
         markers.add(Marker(
           markerId: MarkerId('plain-${p.id}'),
           position: LatLng(p.lat!, p.lng!),
@@ -185,7 +193,9 @@ class _MapScreenState extends State<MapScreen> {
     final lng = (b.southwest.longitude + b.northeast.longitude) / 2;
     final dLat = (b.northeast.latitude - b.southwest.latitude) * 111320 / 2;
     final dLng = (b.northeast.longitude - b.southwest.longitude) *
-        111320 * math.cos(lat * math.pi / 180) / 2;
+        111320 *
+        math.cos(lat * math.pi / 180) /
+        2;
     final radius = math.sqrt(dLat * dLat + dLng * dLng).clamp(200.0, 1500.0);
     return placesService.searchNearby(lat: lat, lng: lng, radiusMeters: radius);
   }
@@ -202,7 +212,8 @@ class _MapScreenState extends State<MapScreen> {
           children: [
             Text(p.name, style: Theme.of(ctx).textTheme.titleLarge),
             Text(
-              [if (p.primaryTypeLabel != null) p.primaryTypeLabel!, p.address].join(' · '),
+              [if (p.primaryTypeLabel != null) p.primaryTypeLabel!, p.address]
+                  .join(' · '),
               style: Theme.of(ctx).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
@@ -281,34 +292,37 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: _taipei,
-            style: kFoodOnlyMapStyle,
-            myLocationEnabled: _myLocation,
-            myLocationButtonEnabled: false,
-            mapToolbarEnabled: false,
-            zoomControlsEnabled: false,
-            markers: _markers,
-            onMapCreated: (c) {
-              _controller = c;
-              _reload();
-            },
-            onCameraIdle: _onCameraIdle,
-          ),
-          Positioned(
-            left: 12,
-            right: 12,
-            top: MediaQuery.paddingOf(context).top + 12,
-            child: _Legend(loading: _loading, error: _error, zoomedOut: _zoomedOut),
-          ),
-          Positioned(
-            right: 16,
-            bottom: MediaQuery.paddingOf(context).bottom + 16,
-            child: _LocateButton(onPressed: _locateMe),
-          ),
-        ],
+      body: Builder(
+        builder: (context) => Stack(
+          children: [
+            GoogleMap(
+              initialCameraPosition: _taipei,
+              style: kFoodOnlyMapStyle,
+              myLocationEnabled: _myLocation,
+              myLocationButtonEnabled: false,
+              mapToolbarEnabled: false,
+              zoomControlsEnabled: false,
+              markers: _markers,
+              onMapCreated: (c) {
+                _controller = c;
+                _reload();
+              },
+              onCameraIdle: _onCameraIdle,
+            ),
+            Positioned(
+              left: 12,
+              right: 12,
+              top: MediaQuery.paddingOf(context).top + 12,
+              child: _Legend(
+                  loading: _loading, error: _error, zoomedOut: _zoomedOut),
+            ),
+            Positioned(
+              right: 16,
+              bottom: MediaQuery.paddingOf(context).bottom + 16,
+              child: _LocateButton(onPressed: _locateMe),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -331,9 +345,13 @@ class _LocateButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.cardTheme.color ?? theme.colorScheme.surface,
           shape: BoxShape.circle,
-          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3))],
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black26, blurRadius: 8, offset: Offset(0, 3))
+          ],
         ),
-        child: Icon(CupertinoIcons.location_fill, color: theme.colorScheme.primary, size: 24),
+        child: Icon(CupertinoIcons.location_fill,
+            color: theme.colorScheme.primary, size: 24),
       ),
     );
   }
@@ -364,7 +382,10 @@ class _Legend extends StatelessWidget {
                         VerdictIcon(v, size: 18),
                         const SizedBox(width: 4),
                         Flexible(
-                          child: Text(v.label, style: text, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: Text(v.label,
+                              style: text,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
                         ),
                       ],
                     ),
@@ -374,19 +395,26 @@ class _Legend extends StatelessWidget {
             if (loading)
               const Padding(
                 padding: EdgeInsets.only(top: 6),
-                child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2)),
               ),
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                zoomedOut ? '放大地圖可顯示範圍內所有餐飲店（灰色小針＝尚無評價）' : '灰色小針＝尚無評價的餐飲店，點一下就能寫第一則',
+                zoomedOut
+                    ? '放大地圖可顯示範圍內所有餐飲店（灰色小針＝尚無評價）'
+                    : '灰色小針＝尚無評價的餐飲店，點一下就能寫第一則',
                 style: text,
               ),
             ),
             if (error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text(error!, style: text?.copyWith(color: Theme.of(context).colorScheme.error)),
+                child: Text(error!,
+                    style: text?.copyWith(
+                        color: Theme.of(context).colorScheme.error)),
               ),
           ],
         ),

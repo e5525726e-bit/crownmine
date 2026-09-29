@@ -85,95 +85,101 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         leadingWidth: 72,
       ),
-      body: Form(
-        key: _form,
-        child: ListView(
-          padding: barInsets(context, top: 24, bottom: 24).add(const EdgeInsets.symmetric(horizontal: 24)),
-          children: [
-            Text(
-              '登入後才能發表評價，瀏覽不需要登入。',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 20),
-            if (_signUp) ...[
+      body: Builder(
+        builder: (context) => Form(
+          key: _form,
+          child: ListView(
+            padding: barInsets(context, top: 24, bottom: 24)
+                .add(const EdgeInsets.symmetric(horizontal: 24)),
+            children: [
+              Text(
+                '登入後才能發表評價，瀏覽不需要登入。',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 20),
+              if (_signUp) ...[
+                TextFormField(
+                  controller: _name,
+                  maxLength: 30,
+                  decoration: const InputDecoration(
+                    labelText: '顯示名稱',
+                    helperText: '會顯示在你的評價上',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) => (v ?? '').trim().isEmpty ? '請輸入顯示名稱' : null,
+                ),
+                const SizedBox(height: 12),
+              ],
               TextFormField(
-                controller: _name,
-                maxLength: 30,
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
                 decoration: const InputDecoration(
-                  labelText: '顯示名稱',
-                  helperText: '會顯示在你的評價上',
+                  labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    (v ?? '').trim().isEmpty ? '請輸入顯示名稱' : null,
+                    (v ?? '').contains('@') ? null : '請輸入正確的 Email',
               ),
               const SizedBox(height: 12),
-            ],
-            TextFormField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-              validator: (v) =>
-                  (v ?? '').contains('@') ? null : '請輸入正確的 Email',
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _password,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: '密碼',
-                helperText: '至少 6 個字',
-                border: OutlineInputBorder(),
-              ),
-              validator: (v) => (v ?? '').length < 6 ? '密碼至少 6 個字' : null,
-              onFieldSubmitted: (_) => _submit(),
-            ),
-            if (_signUp)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Row(
-                  children: [
-                    CupertinoSwitch(
-                      value: _agreed,
-                      onChanged: (v) => setState(() => _agreed = v),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          const Text('我已閱讀並同意'),
-                          CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 0),
-                            onPressed: () => Navigator.of(context).push(
-                              CupertinoPageRoute(builder: (_) => const TermsScreen()),
-                            ),
-                            child: const Text('使用條款與社群規範'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              TextFormField(
+                controller: _password,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: '密碼',
+                  helperText: '至少 6 個字',
+                  border: OutlineInputBorder(),
                 ),
+                validator: (v) => (v ?? '').length < 6 ? '密碼至少 6 個字' : null,
+                onFieldSubmitted: (_) => _submit(),
               ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _busy ? null : _submit,
-              child: _busy
-                  ? const SizedBox(
-                      width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_signUp ? '建立帳號' : '登入'),
-            ),
-            TextButton(
-              onPressed: _busy ? null : () => setState(() => _signUp = !_signUp),
-              child: Text(_signUp ? '已經有帳號了？登入' : '還沒有帳號？註冊'),
-            ),
-          ],
+              if (_signUp)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    children: [
+                      CupertinoSwitch(
+                        value: _agreed,
+                        onChanged: (v) => setState(() => _agreed = v),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text('我已閱讀並同意'),
+                            CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 0),
+                              onPressed: () => Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                    builder: (_) => const TermsScreen()),
+                              ),
+                              child: const Text('使用條款與社群規範'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _busy ? null : _submit,
+                child: _busy
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(_signUp ? '建立帳號' : '登入'),
+              ),
+              TextButton(
+                onPressed:
+                    _busy ? null : () => setState(() => _signUp = !_signUp),
+                child: Text(_signUp ? '已經有帳號了？登入' : '還沒有帳號？註冊'),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -54,7 +54,8 @@ class Review {
       hasReceipt: r['receipt_path'] != null,
       tags: ReviewTag.listFromDb(r['tags']),
       photoUrls: photos
-          .map((p) => photoUrl((p as Map<String, dynamic>)['storage_path'] as String))
+          .map((p) =>
+              photoUrl((p as Map<String, dynamic>)['storage_path'] as String))
           .toList(),
     );
   }

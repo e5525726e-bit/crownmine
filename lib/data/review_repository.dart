@@ -90,7 +90,8 @@ class ReviewRepository {
 
   /// App 內搜尋評價。q 為空時等同排行榜。
   Future<List<ReviewedPlace>> searchReviewedPlaces(String q) async {
-    final rows = await _db.rpc('search_reviewed_places', params: {'q': q.trim()});
+    final rows =
+        await _db.rpc('search_reviewed_places', params: {'q': q.trim()});
     return (rows as List)
         .map((r) => ReviewedPlace.fromRow(r as Map<String, dynamic>))
         .toList();

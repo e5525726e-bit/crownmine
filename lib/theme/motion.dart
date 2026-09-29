@@ -8,14 +8,17 @@ import 'package:flutter/widgets.dart';
 class AppSprings {
   AppSprings._();
 
-  static SpringDescription _spring({required double damping, required double response}) {
+  static SpringDescription _spring(
+      {required double damping, required double response}) {
     const mass = 1.0;
     final stiffness = math.pow(2 * math.pi / response, 2) * mass;
-    return SpringDescription.withDampingRatio(mass: mass, stiffness: stiffness.toDouble(), ratio: damping);
+    return SpringDescription.withDampingRatio(
+        mass: mass, stiffness: stiffness.toDouble(), ratio: damping);
   }
 
   /// 預設：臨界阻尼、0.35 秒回應。
-  static final SpringDescription standard = _spring(damping: 1.0, response: 0.35);
+  static final SpringDescription standard =
+      _spring(damping: 1.0, response: 0.35);
 
   /// 有慣性的互動用：略帶回彈。
   static final SpringDescription bouncy = _spring(damping: 0.8, response: 0.35);
@@ -25,4 +28,5 @@ class AppSprings {
 }
 
 /// 使用者是否開啟「減少動態效果」。
-bool reduceMotion(BuildContext context) => MediaQuery.disableAnimationsOf(context);
+bool reduceMotion(BuildContext context) =>
+    MediaQuery.disableAnimationsOf(context);

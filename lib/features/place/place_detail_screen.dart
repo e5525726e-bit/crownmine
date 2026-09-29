@@ -73,7 +73,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   Future<bool> _ensureSignedIn() async {
     if (reviewRepo.isSignedIn) return true;
     final ok = await Navigator.of(context).push<bool>(
-      CupertinoPageRoute(builder: (_) => const LoginScreen(), fullscreenDialog: true),
+      CupertinoPageRoute(
+          builder: (_) => const LoginScreen(), fullscreenDialog: true),
     );
     return ok == true && reviewRepo.isSignedIn;
   }
@@ -152,100 +153,110 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           bottomNavigationBar: AppleBottomBar(
             child: FilledButton.icon(
               onPressed: () => _write(p, d.mine),
-              icon: Icon(d.mine == null ? CupertinoIcons.square_pencil : CupertinoIcons.pencil),
+              icon: Icon(d.mine == null
+                  ? CupertinoIcons.square_pencil
+                  : CupertinoIcons.pencil),
               label: Text(d.mine == null ? '寫評價' : '修改我的評價'),
             ),
           ),
-          body: RefreshIndicator(
-            onRefresh: () async {
-              _reload();
-              await _future;
-            },
-            child: ListView(
-              padding: barInsets(context),
-              children: [
-                if (p.photos.isNotEmpty) _HeaderPhoto(place: p),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Text(p.name, style: text.headlineLarge),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Text(
-                    [
-                      if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
-                      if (p.priceLabel != null) p.priceLabel!,
-                      if (p.isClosedPermanently) '已歇業',
-                    ].join(' · '),
-                    style: text.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                ),
-                InsetGroup(
-                  children: [
-                    ListTile(
-                      leading: const Icon(CupertinoIcons.location_solid),
-                      title: Text(p.address),
-                      trailing: p.googleMapsUri == null ? null : const Chevron(),
-                      onTap: () => _open(p.googleMapsUri),
-                    ),
-                    if (p.phone != null)
-                      ListTile(
-                        leading: const Icon(CupertinoIcons.phone_fill),
-                        title: Text(p.phone!),
-                        onTap: () => _open('tel:${p.phone}'),
-                      ),
-                    if (p.website != null)
-                      ListTile(
-                        leading: const Icon(CupertinoIcons.globe),
-                        title: Text(p.website!, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        onTap: () => _open(p.website),
-                      ),
-                    if (p.weekdayDescriptions.isNotEmpty)
-                      ExpansionTile(
-                        leading: const Icon(CupertinoIcons.clock_fill),
-                        title: const Text('營業時間'),
-                        children: [
-                          for (final line in p.weekdayDescriptions)
-                            ListTile(dense: true, title: Text(line, style: text.bodyMedium)),
-                        ],
-                      ),
-                  ],
-                ),
-                const GoogleAttribution(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                  child: Text('這個 App 的評價', style: text.headlineMedium),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Text('共 ${d.stats.total} 則，皆為本 App 使用者發表',
-                      style: text.bodySmall),
-                ),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
-                    child: VerdictSummary(d.stats),
-                  ),
-                ),
-                if (d.reviews.isEmpty)
+          body: Builder(
+            builder: (context) => RefreshIndicator(
+              onRefresh: () async {
+                _reload();
+                await _future;
+              },
+              child: ListView(
+                padding: barInsets(context),
+                children: [
+                  if (p.photos.isNotEmpty) _HeaderPhoto(place: p),
                   Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: Text(p.name, style: text.headlineLarge),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: Text(
-                      '還沒有人評價這家店，成為第一個吧！',
-                      textAlign: TextAlign.center,
-                      style: text.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      [
+                        if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
+                        if (p.priceLabel != null) p.priceLabel!,
+                        if (p.isClosedPermanently) '已歇業',
+                      ].join(' · '),
+                      style: text.bodyMedium
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ),
-                for (final r in d.reviews)
-                  ReviewCard(
-                    review: r,
-                    isMine: r.userId == reviewRepo.currentUser?.id,
-                    onReport: () => _report(r),
-                    onBlock: () => _block(r),
-                    onEdit: () => _write(p, r),
-                    onDelete: () => _delete(r),
+                  InsetGroup(
+                    children: [
+                      ListTile(
+                        leading: const Icon(CupertinoIcons.location_solid),
+                        title: Text(p.address),
+                        trailing:
+                            p.googleMapsUri == null ? null : const Chevron(),
+                        onTap: () => _open(p.googleMapsUri),
+                      ),
+                      if (p.phone != null)
+                        ListTile(
+                          leading: const Icon(CupertinoIcons.phone_fill),
+                          title: Text(p.phone!),
+                          onTap: () => _open('tel:${p.phone}'),
+                        ),
+                      if (p.website != null)
+                        ListTile(
+                          leading: const Icon(CupertinoIcons.globe),
+                          title: Text(p.website!,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          onTap: () => _open(p.website),
+                        ),
+                      if (p.weekdayDescriptions.isNotEmpty)
+                        ExpansionTile(
+                          leading: const Icon(CupertinoIcons.clock_fill),
+                          title: const Text('營業時間'),
+                          children: [
+                            for (final line in p.weekdayDescriptions)
+                              ListTile(
+                                  dense: true,
+                                  title: Text(line, style: text.bodyMedium)),
+                          ],
+                        ),
+                    ],
                   ),
-              ],
+                  const GoogleAttribution(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    child: Text('這個 App 的評價', style: text.headlineMedium),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text('共 ${d.stats.total} 則，皆為本 App 使用者發表',
+                        style: text.bodySmall),
+                  ),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
+                      child: VerdictSummary(d.stats),
+                    ),
+                  ),
+                  if (d.reviews.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        '還沒有人評價這家店，成為第一個吧！',
+                        textAlign: TextAlign.center,
+                        style: text.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ),
+                  for (final r in d.reviews)
+                    ReviewCard(
+                      review: r,
+                      isMine: r.userId == reviewRepo.currentUser?.id,
+                      onReport: () => _report(r),
+                      onBlock: () => _block(r),
+                      onEdit: () => _write(p, r),
+                      onDelete: () => _delete(r),
+                    ),
+                ],
+              ),
             ),
           ),
         );
@@ -280,7 +291,8 @@ class _HeaderPhoto extends StatelessWidget {
                 right: 8,
                 bottom: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(6),

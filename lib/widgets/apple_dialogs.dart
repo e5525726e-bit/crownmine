@@ -13,7 +13,10 @@ Future<bool> showConfirm(
     context: context,
     builder: (ctx) => CupertinoAlertDialog(
       title: Text(title),
-      content: message == null ? null : Padding(padding: const EdgeInsets.only(top: 6), child: Text(message)),
+      content: message == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: 6), child: Text(message)),
       actions: [
         CupertinoDialogAction(
           onPressed: () => Navigator.pop(ctx, false),
@@ -49,7 +52,9 @@ Future<String?> showTextPrompt(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (message != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(message)),
+          if (message != null)
+            Padding(
+                padding: const EdgeInsets.only(top: 6), child: Text(message)),
           const SizedBox(height: 12),
           CupertinoTextField(
             controller: controller,
@@ -60,7 +65,8 @@ Future<String?> showTextPrompt(
         ],
       ),
       actions: [
-        CupertinoDialogAction(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+        CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
         CupertinoDialogAction(
           isDefaultAction: true,
           onPressed: () => Navigator.pop(ctx, controller.text.trim()),

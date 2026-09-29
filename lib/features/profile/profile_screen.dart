@@ -26,9 +26,13 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Text('我的', style: Theme.of(context).textTheme.displayLarge),
+                child:
+                    Text('我的', style: Theme.of(context).textTheme.displayLarge),
               ),
-              if (reviewRepo.isSignedIn) const _SignedIn() else const _SignedOut(),
+              if (reviewRepo.isSignedIn)
+                const _SignedIn()
+              else
+                const _SignedOut(),
             ],
           ),
         ),
@@ -48,7 +52,8 @@ class _SignedOut extends StatelessWidget {
             child: Column(
               children: [
                 Icon(CupertinoIcons.person_crop_circle,
-                    size: 72, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    size: 72,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(height: 12),
                 Text(
                   '登入後可以發表評價、檢舉不當內容、封鎖使用者。',
@@ -58,7 +63,9 @@ class _SignedOut extends StatelessWidget {
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () => Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => const LoginScreen(), fullscreenDialog: true),
+                    CupertinoPageRoute(
+                        builder: (_) => const LoginScreen(),
+                        fullscreenDialog: true),
                   ),
                   child: const Text('登入 / 註冊'),
                 ),
@@ -96,7 +103,8 @@ class _SignedInState extends State<_SignedIn> {
       setState(() => _name = reviewRepo.myDisplayName());
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyError(e))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(friendlyError(e))));
     }
   }
 
@@ -113,7 +121,8 @@ class _SignedInState extends State<_SignedIn> {
       await reviewRepo.deleteAccount();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyError(e))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(friendlyError(e))));
     }
   }
 
@@ -128,7 +137,8 @@ class _SignedInState extends State<_SignedIn> {
             FutureBuilder<String?>(
               future: _name,
               builder: (_, snap) => ListTile(
-                leading: const Icon(CupertinoIcons.person_crop_circle_fill, size: 40),
+                leading: const Icon(CupertinoIcons.person_crop_circle_fill,
+                    size: 40),
                 title: Text(snap.data ?? '…'),
                 subtitle: Text(email),
                 trailing: const Chevron(),
@@ -153,12 +163,15 @@ class _SignedInState extends State<_SignedIn> {
         InsetGroup(
           children: [
             ListTile(
-              title: Text('登出', textAlign: TextAlign.center,
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+              title: Text('登出',
+                  textAlign: TextAlign.center,
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.primary)),
               onTap: reviewRepo.signOut,
             ),
             ListTile(
-              title: Text('刪除帳號', textAlign: TextAlign.center, style: TextStyle(color: error)),
+              title: Text('刪除帳號',
+                  textAlign: TextAlign.center, style: TextStyle(color: error)),
               onTap: _deleteAccount,
             ),
           ],

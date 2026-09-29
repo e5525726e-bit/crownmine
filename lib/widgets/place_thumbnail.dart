@@ -19,7 +19,8 @@ class PlaceThumbnail extends StatelessWidget {
       child: Icon(Icons.restaurant, color: scheme.onSurfaceVariant),
     );
     if (place.photos.isEmpty) {
-      return ClipRRect(borderRadius: BorderRadius.circular(8), child: placeholder);
+      return ClipRRect(
+          borderRadius: BorderRadius.circular(8), child: placeholder);
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),

@@ -12,9 +12,9 @@ const double kPinHeadSize = 26;
 
 /// 評價越多，大頭針越大、越「浮」：三個層級。
 enum MarkerTier {
-  small(1.0, false),   // 1–2 則
-  medium(1.2, true),   // 3–9 則
-  large(1.45, true);   // 10 則以上
+  small(1.0, false), // 1–2 則
+  medium(1.2, true), // 3–9 則
+  large(1.45, true); // 10 則以上
 
   const MarkerTier(this.scale, this.showCount);
 
@@ -57,15 +57,19 @@ class VerdictMarkerIcons {
   static final Map<String, PictureInfo> _tagPictures = {};
 
   /// 依標記種類、評價數、是否為 IG 網紅店取得圖示（同一組合只畫一次）。
-  static Future<BitmapDescriptor> icon(Verdict v, int total, {bool igBadge = false}) async {
+  static Future<BitmapDescriptor> icon(Verdict v, int total,
+      {bool igBadge = false}) async {
     final tier = MarkerTier.forCount(total);
-    final key = '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}-${igBadge ? 'ig' : ''}';
+    final key =
+        '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}-${igBadge ? 'ig' : ''}';
     return _cache[key] ??= await _render(v, tier, total, igBadge);
   }
 
-  static Future<BitmapDescriptor> _render(Verdict v, MarkerTier tier, int total, bool igBadge) async {
+  static Future<BitmapDescriptor> _render(
+      Verdict v, MarkerTier tier, int total, bool igBadge) async {
     final (bytes, size) = await renderPng(v, tier, total, igBadge: igBadge);
-    return BitmapDescriptor.bytes(bytes, width: size.width, height: size.height);
+    return BitmapDescriptor.bytes(bytes,
+        width: size.width, height: size.height);
   }
 
   static BitmapDescriptor? _plain;
@@ -79,31 +83,35 @@ class VerdictMarkerIcons {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder)..scale(_dpr);
     const c = Offset(logical / 2, logical / 2);
-    canvas.drawCircle(c, logical / 2, Paint()..color = const Color(0xFF007AFF).withValues(alpha: 0.18));
+    canvas.drawCircle(c, logical / 2,
+        Paint()..color = const Color(0xFF007AFF).withValues(alpha: 0.18));
     canvas.drawCircle(c, 9, Paint()..color = Colors.white);
     canvas.drawCircle(c, 7, Paint()..color = const Color(0xFF007AFF));
     final image = await recorder.endRecording().toImage(px, px);
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
-    return _me = BitmapDescriptor.bytes(bytes!.buffer.asUint8List(), width: logical, height: logical);
+    return _me = BitmapDescriptor.bytes(bytes!.buffer.asUint8List(),
+        width: logical, height: logical);
   }
 
   /// 尚無評價的餐飲店：灰色小針、白色叉匙。
   static Future<BitmapDescriptor> plainIcon() async {
     if (_plain != null) return _plain!;
     final (bytes, size) = await renderPlainPng();
-    return _plain = BitmapDescriptor.bytes(bytes, width: size.width, height: size.height);
+    return _plain =
+        BitmapDescriptor.bytes(bytes, width: size.width, height: size.height);
   }
 
   static Future<(Uint8List, Size)> renderPlainPng() async {
-    final food = _tagPictures['food'] ??=
-        await vg.loadPicture(const SvgAssetLoader('assets/icons/food.svg'), null);
+    final food = _tagPictures['food'] ??= await vg.loadPicture(
+        const SvgAssetLoader('assets/icons/food.svg'), null);
     const head = kPinHeadSize * 0.72;
     const tail = head * 0.55;
     const margin = 5.0;
     const width = head + margin * 2;
     const height = head + tail + margin;
-    final px = Size((width * _dpr).ceilToDouble(), (height * _dpr).ceilToDouble());
+    final px =
+        Size((width * _dpr).ceilToDouble(), (height * _dpr).ceilToDouble());
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder)..scale(_dpr);
@@ -112,7 +120,10 @@ class VerdictMarkerIcons {
     const r = head / 2;
 
     canvas.drawOval(
-      Rect.fromCenter(center: tip - const Offset(0, 1), width: head * 0.5, height: head * 0.16),
+      Rect.fromCenter(
+          center: tip - const Offset(0, 1),
+          width: head * 0.5,
+          height: head * 0.16),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.22)
         ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2),
@@ -139,7 +150,9 @@ class VerdictMarkerIcons {
       ..drawPicture(food.picture)
       ..restore();
 
-    final image = await recorder.endRecording().toImage(px.width.toInt(), px.height.toInt());
+    final image = await recorder
+        .endRecording()
+        .toImage(px.width.toInt(), px.height.toInt());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
     return (bytes!.buffer.asUint8List(), const Size(width, height));
@@ -147,9 +160,11 @@ class VerdictMarkerIcons {
 
   /// 畫出大頭針的 PNG（回傳位元組與邏輯尺寸）。獨立出來方便預覽與測試。
   /// [igBadge] 為 true 時在左上角加 IG 徽章。
-  static Future<(Uint8List, Size)> renderPng(Verdict v, MarkerTier tier, int total,
+  static Future<(Uint8List, Size)> renderPng(
+      Verdict v, MarkerTier tier, int total,
       {bool igBadge = false}) async {
-    final info = _pictures[v] ??= await vg.loadPicture(SvgAssetLoader(v.asset), null);
+    final info =
+        _pictures[v] ??= await vg.loadPicture(SvgAssetLoader(v.asset), null);
     PictureInfo? ig;
     if (igBadge) {
       ig = _tagPictures[ReviewTag.ig.asset] ??=
@@ -157,12 +172,13 @@ class VerdictMarkerIcons {
     }
 
     final head = kPinHeadSize * tier.scale; // 針頭直徑
-    final ring = 3.0 * tier.scale;          // 彩色外框寬
-    final tail = head * 0.6;                // 針尖長度
+    final ring = 3.0 * tier.scale; // 彩色外框寬
+    final tail = head * 0.6; // 針尖長度
     final margin = 8.0 + 4 * (tier.scale - 1); // 留給徽章與陰影
     final width = head + ring * 2 + margin * 2;
     final height = head + ring * 2 + tail + margin;
-    final px = Size((width * _dpr).ceilToDouble(), (height * _dpr).ceilToDouble());
+    final px =
+        Size((width * _dpr).ceilToDouble(), (height * _dpr).ceilToDouble());
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder)..scale(_dpr);
@@ -172,10 +188,14 @@ class VerdictMarkerIcons {
 
     // 地面陰影：越大的針陰影越明顯，看起來浮在地圖上
     canvas.drawOval(
-      Rect.fromCenter(center: tip - const Offset(0, 1), width: head * 0.55, height: head * 0.18),
+      Rect.fromCenter(
+          center: tip - const Offset(0, 1),
+          width: head * 0.55,
+          height: head * 0.18),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.28)
-        ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.normal, 2.5 * tier.scale),
+        ..maskFilter =
+            ui.MaskFilter.blur(ui.BlurStyle.normal, 2.5 * tier.scale),
     );
 
     // 針身：圓形針頭 + 針尖（用標記顏色）
@@ -206,7 +226,8 @@ class VerdictMarkerIcons {
     // IG 網紅店徽章（左上角）
     if (ig != null) {
       final r = outerR * 0.5;
-      final c = Offset(headCenter.dx - outerR * 0.72, headCenter.dy - outerR * 0.72);
+      final c =
+          Offset(headCenter.dx - outerR * 0.72, headCenter.dy - outerR * 0.72);
       canvas.drawCircle(c, r + 1.5, Paint()..color = Colors.white);
       canvas.drawCircle(c, r, Paint()..color = Colors.white);
       canvas
@@ -235,7 +256,8 @@ class VerdictMarkerIcons {
       )..layout();
       final badgeH = tp.height + 6;
       final badgeW = (tp.width + 10).clamp(badgeH, double.infinity);
-      final badgeCenter = Offset(headCenter.dx + outerR * 0.72, headCenter.dy - outerR * 0.72);
+      final badgeCenter =
+          Offset(headCenter.dx + outerR * 0.72, headCenter.dy - outerR * 0.72);
       final rect = RRect.fromRectAndRadius(
         Rect.fromCenter(center: badgeCenter, width: badgeW, height: badgeH),
         Radius.circular(badgeH / 2),
@@ -245,7 +267,9 @@ class VerdictMarkerIcons {
       tp.paint(canvas, badgeCenter - Offset(tp.width / 2, tp.height / 2));
     }
 
-    final image = await recorder.endRecording().toImage(px.width.toInt(), px.height.toInt());
+    final image = await recorder
+        .endRecording()
+        .toImage(px.width.toInt(), px.height.toInt());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
     return (bytes!.buffer.asUint8List(), Size(width, height));

@@ -37,7 +37,8 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
             return const Center(child: Text('你還沒有寫過評價'));
           }
           return InsetListView(
-            padding: barInsets(context, bottom: 24).add(const EdgeInsets.symmetric(horizontal: 16)),
+            padding: barInsets(context, bottom: 24)
+                .add(const EdgeInsets.symmetric(horizontal: 16)),
             itemCount: items.length,
             itemBuilder: (context, i) {
               final (review, place) = items[i];
@@ -53,7 +54,8 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                 trailing: const Chevron(),
                 onTap: () async {
                   await Navigator.of(context).push(CupertinoPageRoute(
-                    builder: (_) => PlaceDetailScreen(placeId: place.id, initial: place),
+                    builder: (_) =>
+                        PlaceDetailScreen(placeId: place.id, initial: place),
                   ));
                   _reload();
                 },
