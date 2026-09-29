@@ -91,16 +91,16 @@ class ReviewedPlace {
       );
 }
 
-/// 一家店的四種核心判斷各有幾個，以及各種附加標籤各被標了幾次。
+/// 一家店的五種核心判斷各有幾個，以及各種附加標籤各被標了幾次。
 class PlaceStats {
   const PlaceStats({
     this.crowns = 0,
     this.greens = 0,
     this.mines = 0,
     this.poops = 0,
+    this.richs = 0,
     this.igs = 0,
     this.photogenics = 0,
-    this.richs = 0,
     this.dates = 0,
   });
 
@@ -108,12 +108,12 @@ class PlaceStats {
   final int greens;
   final int mines;
   final int poops;
+  final int richs;
   final int igs;
   final int photogenics;
-  final int richs;
   final int dates;
 
-  int get total => crowns + greens + mines + poops;
+  int get total => crowns + richs + greens + mines + poops;
 
   /// 最多人給的標記；平手時依 [Verdict.values] 的順序（皇冠優先）。
   Verdict? get dominant {
@@ -127,6 +127,7 @@ class PlaceStats {
 
   int count(Verdict v) => switch (v) {
         Verdict.crown => crowns,
+        Verdict.rich => richs,
         Verdict.green => greens,
         Verdict.mine => mines,
         Verdict.poop => poops,
@@ -135,7 +136,6 @@ class PlaceStats {
   int tagCount(ReviewTag t) => switch (t) {
         ReviewTag.ig => igs,
         ReviewTag.photogenic => photogenics,
-        ReviewTag.rich => richs,
         ReviewTag.date => dates,
       };
 

@@ -27,7 +27,7 @@ void main() {
     primaryType: 'restaurant',
   );
 
-  testWidgets('寫評價頁顯示四種標記與兩種標籤且可以選取', (tester) async {
+  testWidgets('寫評價頁顯示五種標記與所有標籤且可以選取', (tester) async {
     _phone(tester);
     await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));
     await tester.pumpAndSettle();

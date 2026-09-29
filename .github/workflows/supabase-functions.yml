@@ -27,7 +27,7 @@ jobs:
           ref=$(jq -r .SUPABASE_URL dart_defines.json | sed -E 's#https://([^.]+)\.supabase\.co#\1#')
           key=$(jq -r .GOOGLE_PLACES_API_KEY dart_defines.json)
           echo "::add-mask::$key"
-          for f in 0005_places_proxy.sql 0006_plans.sql 0007_more_tags.sql; do
+          for f in 0005_places_proxy.sql 0006_plans.sql 0007_more_tags.sql 0008a_rich_verdict.sql 0008b_rich_stats.sql; do
             echo "==> 執行 migration $f"
             result=$(curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
               -X POST "https://api.supabase.com/v1/projects/$ref/database/query" \

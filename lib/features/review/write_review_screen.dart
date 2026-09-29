@@ -188,21 +188,38 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               const SizedBox(height: 24),
               Text('這家店你給什麼？', style: text.titleMedium),
               const SizedBox(height: 8),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.22,
-                children: [
-                  for (final v in Verdict.values)
-                    _VerdictOption(
-                      verdict: v,
-                      selected: _verdict == v,
-                      onTap: () => setState(() => _verdict = v),
-                    ),
-                ],
+              LayoutBuilder(
+                builder: (context, c) {
+                  // 兩個一列；最後落單的那個佔滿整列
+                  const gap = 10.0;
+                  final cellH = ((c.maxWidth - gap) / 2) / 1.22;
+                  final rows = <Widget>[];
+                  for (var i = 0; i < Verdict.values.length; i += 2) {
+                    final pair = Verdict.values.skip(i).take(2).toList();
+                    rows.add(SizedBox(
+                      height: cellH,
+                      child: Row(
+                        children: [
+                          for (var j = 0; j < pair.length; j++) ...[
+                            if (j > 0) const SizedBox(width: gap),
+                            Expanded(
+                              child: _VerdictOption(
+                                verdict: pair[j],
+                                selected: _verdict == pair[j],
+                                onTap: () =>
+                                    setState(() => _verdict = pair[j]),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ));
+                    if (i + 2 < Verdict.values.length) {
+                      rows.add(const SizedBox(height: gap));
+                    }
+                  }
+                  return Column(children: rows);
+                },
               ),
               const SizedBox(height: 20),
               Text('這家店的特色（選填，可複選）', style: text.titleMedium),

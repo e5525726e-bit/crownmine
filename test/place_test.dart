@@ -40,7 +40,7 @@ void main() {
 
   test('標籤對應資料庫值', () {
     expect(ReviewTag.listFromDb(['ig', 'x', 'photogenic', 'rich', 'date']),
-        [ReviewTag.ig, ReviewTag.photogenic, ReviewTag.rich, ReviewTag.date]);
+        [ReviewTag.ig, ReviewTag.photogenic, ReviewTag.date]);
     expect(ReviewTag.ig.asset, 'assets/icons/ig.svg');
   });
 
@@ -52,18 +52,20 @@ void main() {
     expect(Verdict.poop.isNegative, isTrue);
     expect(Verdict.crown.isNegative, isFalse);
     expect(Verdict.green.isNegative, isFalse);
+    expect(Verdict.rich.isNegative, isFalse);
+    expect(Verdict.values.length, 5);
   });
 
-  test('PlaceStats 四種計數與標籤', () {
+  test('PlaceStats 五種計數與標籤', () {
     final s = PlaceStats.fromRow({'crowns': 3, 'greens': 2, 'mines': 1, 'poops': 0, 'igs': 4, 'photogenics': 1, 'richs': 2, 'dates': 0});
-    expect(s.total, 6);
+    expect(s.total, 8);
     expect(s.tagCount(ReviewTag.ig), 4);
     expect(s.isTagged(ReviewTag.ig), isTrue);
     expect(s.isTagged(ReviewTag.photogenic), isFalse);
-    expect(s.isTagged(ReviewTag.rich), isTrue);
     expect(s.isTagged(ReviewTag.date), isFalse);
     expect(s.hasTags, isTrue);
     expect(s.count(Verdict.crown), 3);
+    expect(s.count(Verdict.rich), 2);
     expect(s.count(Verdict.green), 2);
     expect(s.count(Verdict.mine), 1);
     expect(s.count(Verdict.poop), 0);

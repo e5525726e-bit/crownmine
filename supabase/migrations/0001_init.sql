@@ -6,7 +6,7 @@
 create extension if not exists pg_trgm;
 
 -- 四種核心判斷：皇冠（真心推薦）、綠燈（普通中規中矩）、地雷（普通又貴）、大便（難吃／態度環境很差）
-create type public.verdict as enum ('crown', 'green', 'mine', 'poop');
+create type public.verdict as enum ('crown', 'rich', 'green', 'mine', 'poop');
 
 -- ---------------------------------------------------------------------
 -- 使用者公開資料（auth.users 建立時自動產生）
@@ -64,7 +64,7 @@ create table public.reviews (
   price_paid   integer check (price_paid is null or price_paid between 0 and 100000),
   visited_on   date,
   receipt_path text,                       -- 消費證明（私有 bucket）
-  tags         text[] not null default '{}' check (tags <@ array['ig', 'photogenic', 'rich', 'date']),  -- 附加標籤：IG 網紅店、網美店、老子有錢不差錢、適合約會
+  tags         text[] not null default '{}' check (tags <@ array['ig', 'photogenic', 'date']),  -- 附加標籤：IG 網紅店、網美店、適合約會
   status       text not null default 'visible' check (status in ('visible', 'hidden', 'removed')),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now(),
@@ -137,12 +137,12 @@ with (security_invoker = true) as
 select
   place_id,
   count(*) filter (where verdict = 'crown') as crowns,
+  count(*) filter (where verdict = 'rich')  as richs,
   count(*) filter (where verdict = 'green') as greens,
   count(*) filter (where verdict = 'mine')  as mines,
   count(*) filter (where verdict = 'poop')  as poops,
   count(*) filter (where 'ig' = any(tags))         as igs,
   count(*) filter (where 'photogenic' = any(tags)) as photogenics,
-  count(*) filter (where 'rich' = any(tags))       as richs,
   count(*) filter (where 'date' = any(tags))       as dates
 from public.reviews
 where status = 'visible'
@@ -159,7 +159,7 @@ returns table (
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where q = '' or p.name ilike '%' || q || '%' or p.address ilike '%' || q || '%'
-  order by (s.crowns + s.greens + s.mines + s.poops) desc, p.name
+  order by (s.crowns + s.richs + s.greens + s.mines + s.poops) desc, p.name
   limit 50;
 $$;
 
@@ -178,7 +178,7 @@ returns table (
   join public.place_stats s on s.place_id = p.place_id
   where p.lat between min_lat and max_lat
     and p.lng between min_lng and max_lng
-  order by (s.crowns + s.greens + s.mines + s.poops) desc
+  order by (s.crowns + s.richs + s.greens + s.mines + s.poops) desc
   limit 200;
 $$;
 
