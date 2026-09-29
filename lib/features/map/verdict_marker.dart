@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,53 +7,147 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../models/verdict.dart';
 
-/// 地圖標記的圖示大小（邏輯像素）。之後要調整尺寸改這裡即可。
-const double kMarkerIconSize = 34;
+/// 大頭針針頭的基準直徑（邏輯像素）。之後要調整尺寸改這裡即可。
+const double kPinHeadSize = 26;
 
-/// 把四種標記的 SVG 畫成地圖用的 [BitmapDescriptor]：白色圓底 + 圖示。
+/// 評價越多，大頭針越大、越「浮」：三個層級。
+enum MarkerTier {
+  small(1.0, false),   // 1–2 則
+  medium(1.2, true),   // 3–9 則
+  large(1.45, true);   // 10 則以上
+
+  const MarkerTier(this.scale, this.showCount);
+
+  /// 針頭放大倍率
+  final double scale;
+
+  /// 是否顯示評價數徽章
+  final bool showCount;
+
+  static MarkerTier forCount(int total) {
+    if (total >= 10) return MarkerTier.large;
+    if (total >= 3) return MarkerTier.medium;
+    return MarkerTier.small;
+  }
+}
+
+/// 把四種標記畫成 Google 地圖那種「大頭針」：
+/// 針頭是白色圓形放評價圖示、外框用該標記的顏色、下面有針尖與地面陰影。
+/// 取代 Google 原本的紅色大頭針。
 class VerdictMarkerIcons {
   VerdictMarkerIcons._();
 
-  static final Map<Verdict, BitmapDescriptor> _cache = {};
+  static final Map<String, BitmapDescriptor> _cache = {};
+  static final Map<Verdict, PictureInfo> _pictures = {};
+  static double _dpr = 2;
 
-  static Future<Map<Verdict, BitmapDescriptor>> load(double devicePixelRatio) async {
-    if (_cache.length == Verdict.values.length) return _cache;
+  /// 徽章數字的字型；預設用系統字型，只有產生預覽圖時會指定。
+  static String? badgeFontFamily;
+
+  /// 針尖在圖片底部正中央，Marker 的 anchor 要設成這個值。
+  static const Offset anchor = Offset(0.5, 1.0);
+
+  static Future<void> preload(double devicePixelRatio) async {
+    _dpr = devicePixelRatio;
     for (final v in Verdict.values) {
-      _cache[v] = await _render(v, devicePixelRatio);
+      _pictures[v] ??= await vg.loadPicture(SvgAssetLoader(v.asset), null);
     }
-    return _cache;
   }
 
-  static Future<BitmapDescriptor> _render(Verdict v, double dpr) async {
-    final info = await vg.loadPicture(SvgAssetLoader(v.asset), null);
-    const padding = kMarkerIconSize * 0.18;
-    const logical = kMarkerIconSize + padding * 2;
-    final px = (logical * dpr).ceil();
+  /// 依標記種類與評價數取得圖示（同一組合只畫一次）。
+  static Future<BitmapDescriptor> icon(Verdict v, int total) async {
+    final tier = MarkerTier.forCount(total);
+    final key = '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}';
+    return _cache[key] ??= await _render(v, tier, total);
+  }
+
+  static Future<BitmapDescriptor> _render(Verdict v, MarkerTier tier, int total) async {
+    final (bytes, size) = await renderPng(v, tier, total);
+    return BitmapDescriptor.bytes(bytes, width: size.width, height: size.height);
+  }
+
+  /// 畫出大頭針的 PNG（回傳位元組與邏輯尺寸）。獨立出來方便預覽與測試。
+  static Future<(Uint8List, Size)> renderPng(Verdict v, MarkerTier tier, int total) async {
+    final info = _pictures[v] ??= await vg.loadPicture(SvgAssetLoader(v.asset), null);
+
+    final head = kPinHeadSize * tier.scale; // 針頭直徑
+    final ring = 3.0 * tier.scale;          // 彩色外框寬
+    final tail = head * 0.6;                // 針尖長度
+    final margin = 8.0 + 4 * (tier.scale - 1); // 留給徽章與陰影
+    final width = head + ring * 2 + margin * 2;
+    final height = head + ring * 2 + tail + margin;
+    final px = Size((width * _dpr).ceilToDouble(), (height * _dpr).ceilToDouble());
 
     final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder)..scale(dpr);
-    const center = Offset(logical / 2, logical / 2);
-    canvas.drawCircle(
-      center,
-      logical / 2,
-      Paint()..color = Colors.black.withValues(alpha: 0.18),
+    final canvas = Canvas(recorder)..scale(_dpr);
+    final headCenter = Offset(width / 2, margin + ring + head / 2);
+    final tip = Offset(width / 2, height);
+    final outerR = head / 2 + ring;
+
+    // 地面陰影：越大的針陰影越明顯，看起來浮在地圖上
+    canvas.drawOval(
+      Rect.fromCenter(center: tip - const Offset(0, 1), width: head * 0.55, height: head * 0.18),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.28)
+        ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.normal, 2.5 * tier.scale),
     );
-    canvas.drawCircle(center + const Offset(0, -0.5), logical / 2 - 1, Paint()..color = Colors.white);
+
+    // 針身：圓形針頭 + 針尖（用標記顏色）
+    final body = Path()
+      ..addOval(Rect.fromCircle(center: headCenter, radius: outerR))
+      ..moveTo(headCenter.dx - outerR * 0.55, headCenter.dy + outerR * 0.83)
+      ..lineTo(tip.dx, tip.dy)
+      ..lineTo(headCenter.dx + outerR * 0.55, headCenter.dy + outerR * 0.83)
+      ..close();
+    canvas.drawPath(
+      body,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.22)
+        ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.normal, 2 * tier.scale),
+    );
+    canvas.drawPath(body, Paint()..color = v.color);
+
+    // 白色針頭內圈 + 圖示
+    canvas.drawCircle(headCenter, head / 2, Paint()..color = Colors.white);
+    final iconSize = head * 0.72;
     canvas
       ..save()
-      ..translate(padding, padding)
-      ..scale(kMarkerIconSize / info.size.width, kMarkerIconSize / info.size.height)
+      ..translate(headCenter.dx - iconSize / 2, headCenter.dy - iconSize / 2)
+      ..scale(iconSize / info.size.width, iconSize / info.size.height)
       ..drawPicture(info.picture)
       ..restore();
 
-    final image = await recorder.endRecording().toImage(px, px);
+    // 評價數徽章（右上角）
+    if (tier.showCount) {
+      final label = total > 99 ? '99+' : '$total';
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            fontFamily: badgeFontFamily,
+            color: Colors.white,
+            fontSize: 9 + 2 * (tier.scale - 1),
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final badgeH = tp.height + 6;
+      final badgeW = (tp.width + 10).clamp(badgeH, double.infinity);
+      final badgeCenter = Offset(headCenter.dx + outerR * 0.72, headCenter.dy - outerR * 0.72);
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: badgeCenter, width: badgeW, height: badgeH),
+        Radius.circular(badgeH / 2),
+      );
+      canvas.drawRRect(rect.inflate(1.5), Paint()..color = Colors.white);
+      canvas.drawRRect(rect, Paint()..color = const Color(0xFF1C1C1E));
+      tp.paint(canvas, badgeCenter - Offset(tp.width / 2, tp.height / 2));
+    }
+
+    final image = await recorder.endRecording().toImage(px.width.toInt(), px.height.toInt());
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    info.picture.dispose();
     image.dispose();
-    return BitmapDescriptor.bytes(
-      bytes!.buffer.asUint8List(),
-      width: logical,
-      height: logical,
-    );
+    return (bytes!.buffer.asUint8List(), Size(width, height));
   }
 }

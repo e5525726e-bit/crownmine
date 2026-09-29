@@ -28,7 +28,7 @@ class _MapScreenState extends State<MapScreen> {
   static const _taipei = CameraPosition(target: LatLng(25.0418, 121.5436), zoom: 13);
 
   GoogleMapController? _controller;
-  Map<Verdict, BitmapDescriptor>? _icons;
+  bool _iconsReady = false;
   Set<Marker> _markers = const {};
   Timer? _debounce;
   bool _loading = false;
@@ -50,7 +50,8 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _prepare() async {
     final dpr = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
-    _icons = await VerdictMarkerIcons.load(dpr);
+    await VerdictMarkerIcons.preload(dpr);
+    _iconsReady = true;
     final perm = await Geolocator.checkPermission();
     if (perm == LocationPermission.always || perm == LocationPermission.whileInUse) {
       _myLocation = true;
@@ -88,8 +89,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _reload() async {
     final controller = _controller;
-    final icons = _icons;
-    if (controller == null || icons == null) return;
+    if (controller == null || !_iconsReady) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -102,19 +102,23 @@ class _MapScreenState extends State<MapScreen> {
         maxLat: b.northeast.latitude,
         maxLng: b.northeast.longitude,
       );
+      // 評價越多：圖示越大、浮在其他標記上面（zIndex）、顯示評價數
+      final markers = <Marker>{};
+      for (final p in places) {
+        final dominant = p.stats.dominant;
+        if (dominant == null) continue;
+        markers.add(Marker(
+          markerId: MarkerId(p.placeId),
+          position: LatLng(p.lat!, p.lng!),
+          icon: await VerdictMarkerIcons.icon(dominant, p.stats.total),
+          anchor: VerdictMarkerIcons.anchor,
+          zIndexInt: p.stats.total,
+          onTap: () => _showPlace(p),
+        ));
+      }
       if (!mounted) return;
       setState(() {
-        _markers = {
-          for (final p in places)
-            if (p.stats.dominant != null)
-              Marker(
-                markerId: MarkerId(p.placeId),
-                position: LatLng(p.lat!, p.lng!),
-                icon: icons[p.stats.dominant!]!,
-                anchor: const Offset(0.5, 0.5),
-                onTap: () => _showPlace(p),
-              ),
-        };
+        _markers = markers;
         _loading = false;
       });
     } catch (e) {
