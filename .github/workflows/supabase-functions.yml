@@ -29,14 +29,28 @@ jobs:
           ref=$(jq -r .SUPABASE_URL dart_defines.json | sed -E 's#https://([^.]+)\.supabase\.co#\1#')
           key=$(jq -r .GOOGLE_PLACES_API_KEY dart_defines.json)
           echo "::add-mask::$key"
-          for f in 0005_places_proxy.sql 0006_plans.sql 0007_more_tags.sql 0008a_rich_verdict.sql 0008b_rich_stats.sql 0009_poop_fire_tags.sql 0010_negative_body.sql 0011_place_types.sql 0012a_rice_verdict.sql 0012b_rice_stats.sql; do
-            echo "==> 執行 migration $f"
-            result=$(curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+          sql() {  # 執行一段 SQL，失敗就結束
+            local out
+            out=$(curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
               -X POST "https://api.supabase.com/v1/projects/$ref/database/query" \
-              -d "$(jq -n --rawfile q "supabase/migrations/$f" '{query:$q}')")
-            if echo "$result" | jq -e 'type=="object" and .message' >/dev/null 2>&1; then
-              echo "::error::SQL 失敗：$(echo "$result" | jq -r .message)"; exit 1
+              -d "$(jq -n --arg q "$1" '{query:$q}')")
+            if echo "$out" | jq -e 'type=="object" and .message' >/dev/null 2>&1; then
+              echo "::error::SQL 失敗：$(echo "$out" | jq -r .message)"; exit 1
             fi
+            echo "$out"
+          }
+          # 記錄已執行過的 migration，之後只跑新的（重跑舊的會因資料已改變而失敗）
+          sql "create table if not exists public.schema_migrations (name text primary key, applied_at timestamptz not null default now());" >/dev/null
+          # 這個專案在加入此紀錄表之前已套用到 0011（0001 也已包含全部內容），先補記
+          sql "insert into public.schema_migrations(name) select unnest(array['0005_places_proxy.sql','0006_plans.sql','0007_more_tags.sql','0008a_rich_verdict.sql','0008b_rich_stats.sql','0009_poop_fire_tags.sql','0010_negative_body.sql','0011_place_types.sql']) on conflict do nothing;" >/dev/null
+          applied=$(sql "select coalesce(json_agg(name), '[]') from public.schema_migrations;" | jq -r '.[0].coalesce // .[0].json_agg // "[]"')
+          for f in $(ls supabase/migrations | grep -E '^00(0[5-9]|[1-9][0-9])' | sort); do
+            if echo "$applied" | jq -e --arg f "$f" 'index($f) != null' >/dev/null 2>&1; then
+              echo "==> 已套用過，略過 $f"; continue
+            fi
+            echo "==> 執行 migration $f"
+            sql "$(cat "supabase/migrations/$f")" >/dev/null
+            sql "insert into public.schema_migrations(name) values ('$f') on conflict do nothing;" >/dev/null
           done
           echo "==> 設定函式 secret"
           npx --yes supabase@latest secrets set --project-ref "$ref" GOOGLE_PLACES_API_KEY="$key"
