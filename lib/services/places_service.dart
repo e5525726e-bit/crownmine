@@ -48,6 +48,8 @@ class PlacesService {
     String? type,
     TwCity? city,
   }) async {
+    // 關鍵字搜尋（type 為 any，例如手搖飲料）：Google 沒有給這類店餐飲類型，不再過濾
+    final loose = type == 'any';
     final res = await _client.post(
       Uri.parse('$baseUrl/search'),
       headers: _jsonHeaders(),
@@ -66,7 +68,7 @@ class PlacesService {
           },
       }),
     );
-    final places = _parsePlaces(res);
+    final places = _parsePlaces(res, loose: loose);
     if (city == null) return places;
     return places.where((p) => city.inAddress(p.address)).toList();
   }
@@ -104,13 +106,13 @@ class PlacesService {
   String photoUrl(PlacePhoto photo, {int maxWidth = 800}) =>
       '$baseUrl/photo?name=${Uri.encodeQueryComponent(photo.name)}&w=$maxWidth';
 
-  List<Place> _parsePlaces(http.Response res) {
+  List<Place> _parsePlaces(http.Response res, {bool loose = false}) {
     _throwIfError(res);
     final json = jsonDecode(res.body) as Map<String, dynamic>;
     final list = (json['places'] as List?) ?? const [];
     return list
         .map((p) => Place.fromPlacesApi(p as Map<String, dynamic>))
-        .where((p) => p.isFood)
+        .where((p) => loose || p.isFood)
         .toList();
   }
 

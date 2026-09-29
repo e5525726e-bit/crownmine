@@ -5,14 +5,15 @@
 /// - [keyword]：Google 沒有對應類型時（例如火鍋、小吃），改用關鍵字文字搜尋
 enum FoodCategory {
   all('全部', '🍽️', '', []),
-  hotpot('火鍋', '🍲', '火鍋', []),
+  hotpot('火鍋', '🍲', '火鍋', ['hot_pot_restaurant']),
   japanese('日式', '🍣', '日式料理',
       ['japanese_restaurant', 'sushi_restaurant', 'ramen_restaurant']),
   korean('韓式', '🥘', '韓式料理', ['korean_restaurant']),
-  taiwanese('台式', '🇹🇼', '台式餐廳', []),
-  chinese('中式', '🥟', '中式餐廳', ['chinese_restaurant']),
-  snack('小吃', '🍢', '小吃', []),
-  noodle('麵食', '🍜', '麵店', []),
+  taiwanese('台式', '🇹🇼', '台式餐廳', ['taiwanese_restaurant']),
+  chinese('中式', '🥟', '中式餐廳', ['chinese_restaurant', 'dumpling_restaurant']),
+  snack('小吃', '🍢', '小吃', ['snack_bar']),
+  noodle('麵食', '🍜', '麵店',
+      ['noodle_shop', 'chinese_noodle_restaurant', 'ramen_restaurant']),
   brunch('早午餐', '🍳', '早午餐', ['breakfast_restaurant', 'brunch_restaurant']),
   cafe('咖啡廳', '☕', '咖啡廳', ['cafe', 'coffee_shop']),
   dessert('甜點', '🍰', '甜點', [
@@ -22,7 +23,7 @@ enum FoodCategory {
     'ice_cream_shop',
     'donut_shop'
   ]),
-  drink('飲料', '🧋', '手搖飲料', []),
+  drink('飲料', '🧋', '手搖飲料', ['tea_store', 'tea_house', 'juice_shop']),
   bbq('燒烤', '🍖', '燒肉 燒烤', ['barbecue_restaurant']),
   steak('牛排', '🥩', '牛排', ['steak_house']),
   italian('義式', '🍕', '義式料理', ['italian_restaurant', 'pizza_restaurant']),

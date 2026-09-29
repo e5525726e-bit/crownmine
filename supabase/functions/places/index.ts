@@ -20,7 +20,7 @@ const LIMITS: Record<string, [number, number]> = {
   search: [300, 1000],
   details: [300, 1000],
   nearby: [100, 1000],
-  photo: [300, 2000],
+  photo: [1000, 5000],
 };
 const LOGIN_REQUIRED = new Set<string>();
 const UPGRADE_HINT: Record<string, string> = {
@@ -114,7 +114,8 @@ async function google(path: string, init: RequestInit, mask: string) {
 // 只留餐飲業（與前端 isFoodPlace 相同規則）
 const FOOD = new Set(["restaurant","cafe","coffee_shop","bakery","bar","pub","wine_bar","meal_takeaway","meal_delivery",
   "food_court","ice_cream_shop","dessert_shop","tea_house","juice_shop","sandwich_shop","steak_house","diner","noodle_shop",
-  "food","bar_and_grill","cafeteria","food_store","confectionery","donut_shop","bagel_shop","acai_shop","chocolate_shop","candy_store"]);
+  "food","bar_and_grill","cafeteria","food_store","confectionery","donut_shop","bagel_shop","acai_shop","chocolate_shop","candy_store",
+  "snack_bar","bistro","tea_store","dessert_restaurant"]);
 // 分類過濾可指定的類型：白名單內或以 _restaurant 結尾
 const FOOD_TYPES = { has: (t: string) => FOOD.has(t) || /^[a-z_]+_restaurant$/.test(t) };
 const NEARBY_DEFAULT_TYPES = ["restaurant","cafe","bakery","bar","meal_takeaway","meal_delivery"];
@@ -136,7 +137,9 @@ Deno.serve(async (req) => {
   // 照片：先查快取，沒有再向 Google 要實際圖片網址，回 302
   if (sub === "photo" && req.method === "GET") {
     const name = url.searchParams.get("name") ?? "";
-    const w = Math.min(1600, Math.max(100, Number(url.searchParams.get("w") ?? "800")));
+    // 尺寸只分兩級（縮圖／大圖），同一張照片最多只向 Google 要兩次，其餘走快取
+    const wantW = Number(url.searchParams.get("w") ?? "800");
+    const w = wantW <= 400 ? 400 : 1200;
     if (!name.startsWith("places/")) return fail("bad photo name");
     const key = `photo:${name}:${w}`;
     let uri = (await cacheGet(key, TTL_DETAILS_MS)) as string | null;
@@ -194,7 +197,8 @@ Deno.serve(async (req) => {
           ...location,
         }),
       }, SEARCH_MASK);
-      return r2.ok ? { ...r2, body: filterFood(r2.body as { places?: [] }) } : r2;
+      // 關鍵字搜尋（不限類型）時不過濾：手搖飲、小吃攤這類店 Google 常沒給餐飲類型
+      return r2.ok && includedType ? { ...r2, body: filterFood(r2.body as { places?: [] }) } : r2;
     };
   } else if (sub === "nearby" && req.method === "POST") {
     const { lat, lng, radius, types } = await req.json().catch(() => ({}));

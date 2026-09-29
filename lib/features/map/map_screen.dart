@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import '../../di.dart';
 import '../../models/food_category.dart';
@@ -363,9 +364,8 @@ class _MapScreenState extends State<MapScreen> {
       final places = (await reviewedFuture)
           .where((p) => _matches(p.types, p.primaryType, p.name))
           .toList();
-      final nearby = (await nearbyFuture)
-          .where((p) => _matches(p.types, p.primaryType, p.name))
-          .toList();
+      // Google 回來的結果已依種類過濾過（類型或關鍵字），不再用店名二次過濾
+      final nearby = await nearbyFuture;
       for (final p in places) {
         _statsById[p.placeId] = p.stats;
       }
@@ -638,12 +638,13 @@ class _MapScreenState extends State<MapScreen> {
               onCameraIdle: _onCameraIdle,
               onTap: (_) => _searchFocus.unfocus(),
             ),
-            // 上方：搜尋框 + 縣市 + 種類
+            // 上方：搜尋框 + 縣市 + 種類（PointerInterceptor：網頁版手勢不穿透到底下的地圖）
             Positioned(
               left: 0,
               right: 0,
               top: barInsets(context).top + 6,
-              child: Column(
+              child: PointerInterceptor(
+                child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -680,6 +681,7 @@ class _MapScreenState extends State<MapScreen> {
                   CategoryChips(selected: _category, onChanged: _pickCategory),
                 ],
               ),
+              ),
             ),
             // 下方可拉起的清單
             DraggableScrollableSheet(
@@ -688,7 +690,8 @@ class _MapScreenState extends State<MapScreen> {
               maxChildSize: 0.88,
               snap: true,
               snapSizes: const [0.26, 0.55],
-              builder: (context, scroll) => _sheetBody(context, scroll),
+              builder: (context, scroll) =>
+                  PointerInterceptor(child: _sheetBody(context, scroll)),
             ),
           ],
         ),
