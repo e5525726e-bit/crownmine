@@ -20,16 +20,15 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 // - 搜尋／地圖列店家：個人不限，改用「全站總量」保護帳單，另有每 IP 防機器人上限
 const LIMITS: Record<string, [number, number]> = {
   details: [100, 500],
-  nearby: [300, 1000],
   photo: [3000, 10000],
 };
-const GLOBAL_LIMITS: Record<string, number> = { search: 300 };
-const IP_LIMITS: Record<string, number> = { search: 2000 };
+const GLOBAL_LIMITS: Record<string, number> = { search: 300, nearby: 600 };
+const IP_LIMITS: Record<string, number> = { search: 2000, nearby: 2000 };
 const LOGIN_REQUIRED = new Set<string>();
 const UPGRADE_HINT: Record<string, string> = {
   search: "今天全站看地圖與搜尋的次數已達上限，明天再試（有評價的店還是看得到）",
   details: "今日查詢次數已達上限，明天再試",
-  nearby: "今日查看附近餐飲店的次數已達上限，明天再試",
+  nearby: "今天全站查看地圖店家的次數已達上限，明天再試（有評價的店還是看得到）",
   photo: "今日照片瀏覽次數已達上限，明天再試",
 };
 const TTL_SEARCH_MS = 7 * 24 * 3600 * 1000;
@@ -126,11 +125,14 @@ async function google(path: string, init: RequestInit, mask: string) {
 // 只留餐飲業（與前端 isFoodPlace 相同規則）
 const FOOD = new Set(["restaurant","cafe","coffee_shop","bakery","bar","pub","wine_bar","meal_takeaway","meal_delivery",
   "food_court","ice_cream_shop","dessert_shop","tea_house","juice_shop","sandwich_shop","steak_house","diner","noodle_shop",
-  "food","bar_and_grill","cafeteria","food_store","confectionery","donut_shop","bagel_shop","acai_shop","chocolate_shop","candy_store",
+  "food","bar_and_grill","cafeteria","confectionery","donut_shop","bagel_shop","acai_shop","chocolate_shop","candy_store",
   "snack_bar","bistro","tea_store","dessert_restaurant"]);
 // 分類過濾可指定的類型：白名單內或以 _restaurant 結尾
 const FOOD_TYPES = { has: (t: string) => FOOD.has(t) || /^[a-z_]+_restaurant$/.test(t) };
-const NEARBY_DEFAULT_TYPES = ["restaurant","cafe","bakery","bar","meal_takeaway","meal_delivery"];
+// 附近搜尋預設涵蓋的餐飲類型（不含 food_store：會撈到超市、肉舖）
+const NEARBY_DEFAULT_TYPES = ["restaurant","cafe","coffee_shop","bakery","bar","pub","wine_bar","meal_takeaway","meal_delivery",
+  "food_court","ice_cream_shop","dessert_shop","dessert_restaurant","tea_house","tea_store","juice_shop","sandwich_shop","snack_bar",
+  "bistro","diner","noodle_shop","donut_shop","bagel_shop","cafeteria","bar_and_grill","steak_house","acai_shop"];
 function isFood(p: { types?: string[]; primaryType?: string }) {
   const ok = (t: string) => FOOD.has(t) || t.endsWith("_restaurant");
   return (p.primaryType && ok(p.primaryType)) || (p.types ?? []).some(ok);

@@ -437,28 +437,61 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// 列出畫面範圍內的餐飲店：用文字搜尋限制在可視矩形內。
-  /// - 範圍先「對齊到約 500 公尺的格子」再往外擴：在同一格內小幅移動地圖會命中快取，不算次數
-  /// - 放得越大頁數越少（每頁 20 家、各算一次 Google 呼叫）
-  Future<List<Place>> _nearbyIn(LatLngBounds b, double zoom) {
+  /// 列出畫面範圍內的餐飲店。
+  /// - 把畫面切成約 500 公尺的格子，每格做一次「附近搜尋」（各 20 家、依距離），格子最多 6 個；
+  ///   格子中心對齊固定網格，所以小幅移動會命中快取、不算次數
+  /// - 有種類時再補一次文字搜尋，撈 Google 分類沒標到但名稱相關的店
+  /// - 縮得太小（格子超過 6 個）就只用文字搜尋 3 頁
+  Future<List<Place>> _nearbyIn(LatLngBounds b, double zoom) async {
     const grid = 0.005; // 約 500 公尺
-    double down(double v) => (v / grid).floor() * grid;
-    double up(double v) => (v / grid).ceil() * grid;
+    final cells = <({double lat, double lng})>[];
+    final latStart = (b.southwest.latitude / grid).floor();
+    final latEnd = (b.northeast.latitude / grid).floor();
+    final lngStart = (b.southwest.longitude / grid).floor();
+    final lngEnd = (b.northeast.longitude / grid).floor();
+    for (var i = latStart; i <= latEnd; i++) {
+      for (var j = lngStart; j <= lngEnd; j++) {
+        cells.add((lat: (i + 0.5) * grid, lng: (j + 0.5) * grid));
+      }
+    }
     final rect = (
-      minLat: down(b.southwest.latitude),
-      minLng: down(b.southwest.longitude),
-      maxLat: up(b.northeast.latitude),
-      maxLng: up(b.northeast.longitude),
+      minLat: latStart * grid,
+      minLng: lngStart * grid,
+      maxLat: (latEnd + 1) * grid,
+      maxLng: (lngEnd + 1) * grid,
     );
-    final pages = zoom >= 17 ? 1 : (zoom >= 16 ? 2 : 3);
-    return placesService.searchText(
-      _category.isAll ? '餐廳' : _category.keyword,
-      rect: rect,
-      type: 'any',
-      pages: pages,
-      // 飲料店 Google 常沒有餐飲類型，其餘種類仍只留餐飲業
-      strict: _category != FoodCategory.drink,
-    );
+    final keywordOnly = !_category.isAll && !_category.hasTypes;
+    // 便當、飲料這類店 Google 常沒有餐飲類型，不過濾
+    final strict =
+        !(_category == FoodCategory.drink || _category == FoodCategory.bento);
+
+    final futures = <Future<List<Place>>>[];
+    if (cells.length <= 6 && !keywordOnly) {
+      for (final c in cells) {
+        futures.add(placesService.searchNearby(
+          lat: c.lat,
+          lng: c.lng,
+          radiusMeters: 420,
+          types: _category.types,
+        ));
+      }
+    }
+    if (!_category.isAll || cells.length > 6) {
+      futures.add(placesService.searchText(
+        _category.isAll ? '餐廳' : _category.keyword,
+        rect: rect,
+        type: 'any',
+        pages: cells.length > 6 ? 3 : (keywordOnly ? 3 : 1),
+        strict: strict,
+      ));
+    }
+    final merged = <String, Place>{};
+    for (final list in await Future.wait(futures)) {
+      for (final p in list) {
+        merged[p.id] = p;
+      }
+    }
+    return merged.values.toList();
   }
 
   // ------------------------------------------------------------- 距離

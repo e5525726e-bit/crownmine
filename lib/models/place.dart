@@ -22,7 +22,6 @@ const Set<String> kFoodTypes = {
   'food',
   'bar_and_grill',
   'cafeteria',
-  'food_store',
   'confectionery',
   'donut_shop',
   'bagel_shop',
