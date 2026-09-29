@@ -35,8 +35,8 @@ class StorefrontPhoto extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     Image.network(
-                      // 網頁版：圖片主機（Google）不給跨網域讀取時，改用瀏覽器原生 <img> 顯示
-                      webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                      // 網頁版大圖：直接用瀏覽器原生 <img> 顯示（手機 Safari 用 Flutter 自己解碼大圖會失敗）
+                      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                       placesService.photoUrl(p, maxWidth: 800),
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, progress) => progress ==
