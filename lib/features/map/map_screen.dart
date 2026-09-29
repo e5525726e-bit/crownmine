@@ -466,7 +466,25 @@ class _MapScreenState extends State<MapScreen> {
         !(_category == FoodCategory.drink || _category == FoodCategory.bento);
 
     final futures = <Future<List<Place>>>[];
-    if (cells.length <= 6 && !keywordOnly) {
+    if (zoom >= 17 && !keywordOnly) {
+      // 放很大（一兩條街）：以畫面中心為圓心、剛好蓋住畫面的半徑，找最近的 20 家，
+      // 這樣眼前看得到的店幾乎都會出現（中心四捨五入到約 50 公尺以便命中快取）
+      final cLat = (b.southwest.latitude + b.northeast.latitude) / 2;
+      final cLng = (b.southwest.longitude + b.northeast.longitude) / 2;
+      final dLat = (b.northeast.latitude - b.southwest.latitude) * 111320 / 2;
+      final dLng = (b.northeast.longitude - b.southwest.longitude) *
+          111320 *
+          math.cos(cLat * math.pi / 180) /
+          2;
+      final radius = math.sqrt(dLat * dLat + dLng * dLng).clamp(100.0, 400.0);
+      double r2k(double v) => (v * 2000).roundToDouble() / 2000;
+      futures.add(placesService.searchNearby(
+        lat: r2k(cLat),
+        lng: r2k(cLng),
+        radiusMeters: (radius / 50).ceil() * 50,
+        types: _category.types,
+      ));
+    } else if (cells.length <= 6 && !keywordOnly) {
       for (final c in cells) {
         futures.add(placesService.searchNearby(
           lat: c.lat,
