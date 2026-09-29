@@ -1,0 +1,44 @@
+name: Supabase 部署後端函式
+
+# 部署 Google Places 代理函式，並把 Google 金鑰設成函式的 secret。
+# 需要 Supabase Personal Access Token（只在這次執行中使用）。
+on:
+  workflow_dispatch:
+    inputs:
+      supabase_access_token:
+        description: 'Supabase Personal Access Token（sbp_ 開頭）'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: 部署
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ inputs.supabase_access_token }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$SUPABASE_ACCESS_TOKEN"
+          ref=$(jq -r .SUPABASE_URL dart_defines.json | sed -E 's#https://([^.]+)\.supabase\.co#\1#')
+          key=$(jq -r .GOOGLE_PLACES_API_KEY dart_defines.json)
+          echo "::add-mask::$key"
+          echo "==> 執行 migration 0005"
+          result=$(curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+            -X POST "https://api.supabase.com/v1/projects/$ref/database/query" \
+            -d "$(jq -n --rawfile q supabase/migrations/0005_places_proxy.sql '{query:$q}')")
+          if echo "$result" | jq -e 'type=="object" and .message' >/dev/null 2>&1; then
+            echo "::error::SQL 失敗：$(echo "$result" | jq -r .message)"; exit 1
+          fi
+          echo "==> 設定函式 secret"
+          npx --yes supabase@latest secrets set --project-ref "$ref" GOOGLE_PLACES_API_KEY="$key"
+          echo "==> 部署函式 places"
+          npx --yes supabase@latest functions deploy places --project-ref "$ref" --no-verify-jwt
+          echo "==> 驗證"
+          url=$(jq -r .SUPABASE_URL dart_defines.json)
+          curl -sS -X POST "$url/functions/v1/places/search" -H "Content-Type: application/json" \
+            -d '{"query":"台北 牛肉麵"}' | jq -c '{n: (.places | length), first: .places[0].displayName.text, error}'

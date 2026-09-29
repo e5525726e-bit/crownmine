@@ -50,11 +50,16 @@
 ## 技術架構
 
 ```
-Flutter（iOS + Android 同一份程式碼）
- ├─ Google Places API (New)  ← 店家基本資料（唯讀，不含評價）
- ├─ Google Maps SDK          ← 地圖分頁的底圖
- └─ Supabase                 ← 帳號、評價、照片、檢舉、封鎖（Postgres + Auth + Storage）
+Flutter（iOS + Android + Web 同一份程式碼）
+ ├─ Google Maps SDK / JS          ← 地圖分頁的底圖（金鑰在前端，請限制只能用 Maps SDK）
+ └─ Supabase
+     ├─ Postgres + Auth + Storage  ← 帳號、評價、照片、檢舉、封鎖
+     └─ Edge Function `places`     ← Google Places API (New) 代理：
+                                      金鑰藏在伺服器、快取 30 天、每日用量限制
+                                      （登入 300 次／未登入每 IP 100 次）
 ```
+
+第一次或更新後端函式：Actions → **Supabase 部署後端函式** → Run workflow，貼上 Supabase 權杖。
 
 ```
 lib/
