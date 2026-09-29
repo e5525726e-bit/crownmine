@@ -22,7 +22,7 @@ const LIMITS: Record<string, [number, number]> = {
   details: [100, 500],
   photo: [3000, 10000],
 };
-const GLOBAL_LIMITS: Record<string, number> = { search: 300, nearby: 600 };
+const GLOBAL_LIMITS: Record<string, number> = { search: 300, nearby: 1000 };
 const IP_LIMITS: Record<string, number> = { search: 2000, nearby: 2000 };
 const LOGIN_REQUIRED = new Set<string>();
 const UPGRADE_HINT: Record<string, string> = {

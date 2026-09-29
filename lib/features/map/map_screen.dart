@@ -484,6 +484,19 @@ class _MapScreenState extends State<MapScreen> {
         radiusMeters: (radius / 50).ceil() * 50,
         types: _category.types,
       ));
+      // 夜市、市場這種一條街就超過 20 家的地方：再分四個象限各找 20 家
+      if (zoom >= 18) {
+        final qLat = (b.northeast.latitude - b.southwest.latitude) / 4;
+        final qLng = (b.northeast.longitude - b.southwest.longitude) / 4;
+        for (final (sy, sx) in const [(-1, -1), (-1, 1), (1, -1), (1, 1)]) {
+          futures.add(placesService.searchNearby(
+            lat: r2k(cLat + sy * qLat),
+            lng: r2k(cLng + sx * qLng),
+            radiusMeters: ((radius / 2) / 50).ceil() * 50,
+            types: _category.types,
+          ));
+        }
+      }
     } else if (cells.length <= 6 && !keywordOnly) {
       for (final c in cells) {
         futures.add(placesService.searchNearby(
