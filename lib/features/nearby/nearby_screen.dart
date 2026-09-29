@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../di.dart';
+import '../../models/food_category.dart';
 import '../../models/place.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/category_chips.dart';
 import '../../widgets/google_attribution.dart';
 import '../../widgets/inset_group.dart';
 import '../../widgets/inset_list_view.dart';
@@ -20,6 +22,7 @@ class NearbyScreen extends StatefulWidget {
 
 class _NearbyScreenState extends State<NearbyScreen> {
   double _radius = 1000;
+  FoodCategory _category = FoodCategory.all;
   Future<List<Place>>? _future;
 
   Future<List<Place>> _load() async {
@@ -37,10 +40,21 @@ class _NearbyScreenState extends State<NearbyScreen> {
     final pos = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
+    // 有 Google 類型的分類用附近搜尋精準過濾；只有關鍵字的分類（火鍋、小吃…）改用文字搜尋
+    if (!_category.isAll && !_category.hasTypes) {
+      return placesService.searchText(
+        _category.keyword,
+        lat: pos.latitude,
+        lng: pos.longitude,
+        radiusMeters: _radius,
+        type: _category.searchType,
+      );
+    }
     return placesService.searchNearby(
       lat: pos.latitude,
       lng: pos.longitude,
       radiusMeters: _radius,
+      types: _category.types,
     );
   }
 
@@ -97,6 +111,17 @@ class _NearbyScreenState extends State<NearbyScreen> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              child: CategoryChips(
+                selected: _category,
+                onChanged: (c) {
+                  setState(() =>
+                      _category = c == _category ? FoodCategory.all : c);
+                  if (_future != null) _refresh();
+                },
+              ),
+            ),
             Expanded(
               child: AsyncBody<List<Place>>(
                 future: _future,
@@ -113,7 +138,10 @@ class _NearbyScreenState extends State<NearbyScreen> {
                 ),
                 builder: (context, places) {
                   if (places.isEmpty) {
-                    return const Center(child: Text('這個範圍內沒有餐飲店家'));
+                    return Center(
+                        child: Text(_category.isAll
+                            ? '這個範圍內沒有餐飲店家'
+                            : '這個範圍內沒有「${_category.label}」的店家'));
                   }
                   return InsetListView(
                     itemCount: places.length,

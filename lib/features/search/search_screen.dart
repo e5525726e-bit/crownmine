@@ -1,10 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../di.dart';
+import '../../models/food_category.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
 import '../../widgets/async_body.dart';
+import '../../widgets/category_chips.dart';
 import '../../widgets/google_attribution.dart';
 import '../../widgets/inset_group.dart';
 import '../../widgets/inset_list_view.dart';
@@ -26,6 +29,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   _Mode _mode = _Mode.google;
+  FoodCategory _category = FoodCategory.all;
   final _controller = TextEditingController();
   Future<List<Place>>? _googleFuture;
   Future<List<ReviewedPlace>>? _appFuture;
@@ -47,12 +51,37 @@ class _SearchScreenState extends State<SearchScreen> {
     final q = _controller.text.trim();
     setState(() {
       if (_mode == _Mode.google) {
-        if (q.isNotEmpty) _googleFuture = placesService.searchText(q);
+        final full = _category.queryFor(q);
+        if (full.isNotEmpty) _googleFuture = _searchGoogle(full);
       } else {
         _lastAppQuery = q;
         _appFuture = reviewRepo.searchReviewedPlaces(q);
       }
     });
+  }
+
+  /// 有分類時盡量以使用者附近為中心（只用上次已知的位置，不會跳出權限詢問）。
+  Future<List<Place>> _searchGoogle(String query) async {
+    double? lat, lng;
+    if (!_category.isAll) {
+      try {
+        final pos = await Geolocator.getLastKnownPosition();
+        lat = pos?.latitude;
+        lng = pos?.longitude;
+      } catch (_) {}
+    }
+    return placesService.searchText(
+      query,
+      lat: lat,
+      lng: lng,
+      radiusMeters: lat == null ? null : 10000,
+      type: _category.searchType,
+    );
+  }
+
+  void _pickCategory(FoodCategory c) {
+    setState(() => _category = c == _category ? FoodCategory.all : c);
+    _submit();
   }
 
   void _open(String placeId, {Place? initial}) {
@@ -117,6 +146,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
+            if (_mode == _Mode.google)
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: CategoryChips(
+                    selected: _category, onChanged: _pickCategory),
+              ),
             Expanded(
               child: _mode == _Mode.google ? _googleResults() : _appResults(),
             ),
@@ -132,7 +167,7 @@ class _SearchScreenState extends State<SearchScreen> {
         onRetry: _submit,
         empty: const _Hint(
           icon: CupertinoIcons.search,
-          text: '輸入店名或地區開始找店家。\n只會列出餐飲業，不會顯示 Google 的評價。',
+          text: '輸入店名或地區，或點上面的種類開始找店家。\n只會列出餐飲業，不會顯示 Google 的評價。',
         ),
         builder: (context, places) {
           if (places.isEmpty) {

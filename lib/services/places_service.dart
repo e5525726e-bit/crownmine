@@ -36,24 +36,45 @@ class PlacesService {
         ...headers(),
       };
 
-  Future<List<Place>> searchText(String query, {double? lat, double? lng}) async {
+  /// 文字搜尋。[type] 是 Google 類型（限定該類型）、'any' 表示不限、null 則預設餐廳。
+  /// 有座標時以該點為中心（[radiusMeters] 內優先）。
+  Future<List<Place>> searchText(
+    String query, {
+    double? lat,
+    double? lng,
+    double? radiusMeters,
+    String? type,
+  }) async {
     final res = await _client.post(
       Uri.parse('$baseUrl/search'),
       headers: _jsonHeaders(),
-      body: jsonEncode({'query': query, if (lat != null) 'lat': lat, if (lng != null) 'lng': lng}),
+      body: jsonEncode({
+        'query': query,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
+        if (radiusMeters != null) 'radius': radiusMeters,
+        if (type != null) 'type': type,
+      }),
     );
     return _parsePlaces(res);
   }
 
+  /// 附近搜尋。[types] 為 Google 類型清單；空的話由後端用預設的餐飲類型。
   Future<List<Place>> searchNearby({
     required double lat,
     required double lng,
     double radiusMeters = 1000,
+    List<String> types = const [],
   }) async {
     final res = await _client.post(
       Uri.parse('$baseUrl/nearby'),
       headers: _jsonHeaders(),
-      body: jsonEncode({'lat': lat, 'lng': lng, 'radius': radiusMeters}),
+      body: jsonEncode({
+        'lat': lat,
+        'lng': lng,
+        'radius': radiusMeters,
+        if (types.isNotEmpty) 'types': types,
+      }),
     );
     return _parsePlaces(res);
   }

@@ -115,6 +115,9 @@ async function google(path: string, init: RequestInit, mask: string) {
 const FOOD = new Set(["restaurant","cafe","coffee_shop","bakery","bar","pub","wine_bar","meal_takeaway","meal_delivery",
   "food_court","ice_cream_shop","dessert_shop","tea_house","juice_shop","sandwich_shop","steak_house","diner","noodle_shop",
   "food","bar_and_grill","cafeteria","food_store","confectionery","donut_shop","bagel_shop","acai_shop","chocolate_shop","candy_store"]);
+// 分類過濾可指定的類型：白名單內或以 _restaurant 結尾
+const FOOD_TYPES = { has: (t: string) => FOOD.has(t) || /^[a-z_]+_restaurant$/.test(t) };
+const NEARBY_DEFAULT_TYPES = ["restaurant","cafe","bakery","bar","meal_takeaway","meal_delivery"];
 function isFood(p: { types?: string[]; primaryType?: string }) {
   const ok = (t: string) => FOOD.has(t) || t.endsWith("_restaurant");
   return (p.primaryType && ok(p.primaryType)) || (p.types ?? []).some(ok);
@@ -156,35 +159,45 @@ Deno.serve(async (req) => {
   let run: () => Promise<{ ok: boolean; status: number; body: unknown }>;
 
   if (sub === "search" && req.method === "POST") {
-    const { query, lat, lng } = await req.json().catch(() => ({}));
+    const { query, lat, lng, radius, type } = await req.json().catch(() => ({}));
     const q = String(query ?? "").trim();
     if (!q) return fail("缺少 query");
-    const near = (typeof lat === "number" && typeof lng === "number") ? `${lat.toFixed(2)}:${lng.toFixed(2)}` : "tw";
-    key = `search:${q.toLowerCase()}:${near}`;
+    const hasPos = typeof lat === "number" && typeof lng === "number";
+    const r = Math.min(20000, Math.max(100, Number(radius ?? 5000)));
+    const near = hasPos ? `${lat.toFixed(2)}:${lng.toFixed(2)}:${Math.round(r / 500)}` : "tw";
+    // 類型：未指定 → 餐廳；"any" → 不限（靠關鍵字，結果仍會過濾成餐飲）；其他需在白名單內
+    const t = typeof type === "string" && type ? type : "restaurant";
+    const includedType = t === "any" ? undefined : (FOOD_TYPES.has(t) ? t : "restaurant");
+    key = `search:${q.toLowerCase()}:${near}:${includedType ?? "any"}`;
     feature = "search";
     run = async () => {
-      const r = await google("places:searchText", {
+      const r2 = await google("places:searchText", {
         method: "POST",
         body: JSON.stringify({
-          textQuery: q, includedType: "restaurant", regionCode: "TW", languageCode: "zh-TW", pageSize: 20,
-          locationBias: near === "tw"
+          textQuery: q, ...(includedType ? { includedType } : {}), regionCode: "TW", languageCode: "zh-TW", pageSize: 20,
+          locationBias: !hasPos
             ? { rectangle: { low: { latitude: 21.8, longitude: 118.2 }, high: { latitude: 26.4, longitude: 122.1 } } }
-            : { circle: { center: { latitude: lat, longitude: lng }, radius: 5000.0 } },
+            : { circle: { center: { latitude: lat, longitude: lng }, radius: r } },
         }),
       }, SEARCH_MASK);
-      return r.ok ? { ...r, body: filterFood(r.body as { places?: [] }) } : r;
+      return r2.ok ? { ...r2, body: filterFood(r2.body as { places?: [] }) } : r2;
     };
   } else if (sub === "nearby" && req.method === "POST") {
-    const { lat, lng, radius } = await req.json().catch(() => ({}));
+    const { lat, lng, radius, types } = await req.json().catch(() => ({}));
     if (typeof lat !== "number" || typeof lng !== "number") return fail("缺少座標");
     const r = Math.min(3000, Math.max(100, Number(radius ?? 1000)));
-    key = `nearby:${lat.toFixed(3)}:${lng.toFixed(3)}:${Math.round(r / 100)}`;
+    // 分類過濾：只接受白名單內的類型，最多 20 個；沒有就用預設的餐飲類型
+    const wanted = Array.isArray(types)
+      ? (types as unknown[]).filter((x): x is string => typeof x === "string" && FOOD_TYPES.has(x)).slice(0, 20)
+      : [];
+    const includedTypes = wanted.length ? wanted : NEARBY_DEFAULT_TYPES;
+    key = `nearby:${lat.toFixed(3)}:${lng.toFixed(3)}:${Math.round(r / 100)}:${includedTypes.join(",")}`;
     feature = "nearby";
     run = async () => {
       const res = await google("places:searchNearby", {
         method: "POST",
         body: JSON.stringify({
-          includedTypes: ["restaurant","cafe","bakery","bar","meal_takeaway","meal_delivery"],
+          includedTypes,
           maxResultCount: 20, languageCode: "zh-TW", regionCode: "TW", rankPreference: "DISTANCE",
           locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: r } },
         }),
