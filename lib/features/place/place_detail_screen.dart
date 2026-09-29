@@ -12,7 +12,7 @@ import '../../models/verdict.dart';
 import '../../widgets/apple_dialogs.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/google_attribution.dart';
-import '../../widgets/photo_strip.dart';
+import '../../widgets/storefront_photo.dart';
 import '../../widgets/inset_group.dart';
 import '../../widgets/verdict_summary.dart';
 import '../auth/login_screen.dart';
@@ -227,12 +227,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               child: ListView(
                 padding: barInsets(context),
                 children: [
-                  if (p.photos.length == 1) _HeaderPhoto(place: p),
-                  if (p.photos.length > 1)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: PhotoStrip(googlePhotos: p.photos, height: 180),
-                    ),
+                  if (p.photos.isNotEmpty)
+                    StorefrontPhoto(photo: p.photos.first),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Text(p.name, style: text.headlineLarge),
@@ -329,47 +325,3 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
   }
 }
 
-class _HeaderPhoto extends StatelessWidget {
-  const _HeaderPhoto({required this.place});
-  final Place place;
-
-  @override
-  Widget build(BuildContext context) {
-    final photo = place.photos.first;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Image.network(
-                placesService.photoUrl(photo, maxWidth: 1200),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            ),
-            if (photo.attributions.isNotEmpty)
-              Positioned(
-                right: 8,
-                bottom: 8,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '照片：${photo.attributions.join('、')}',
-                    style: const TextStyle(color: Colors.white, fontSize: 11),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}

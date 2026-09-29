@@ -17,7 +17,7 @@ import '../../widgets/apple_bars.dart';
 import '../../widgets/category_chips.dart';
 import '../../widgets/google_attribution.dart';
 import '../../widgets/inset_group.dart';
-import '../../widgets/photo_strip.dart';
+import '../../widgets/storefront_photo.dart';
 import '../../widgets/place_thumbnail.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/verdict_icon.dart';
@@ -478,33 +478,24 @@ class _MapScreenState extends State<MapScreen> {
     ));
   }
 
-  /// 店家照片：Google 照片（搜尋結果自帶，沒有就再查一次詳細資料）＋食客上傳的評價照片。
-  Future<({List<String> user, List<PlacePhoto> google})> _photosOf(
-      String placeId, {List<PlacePhoto> known = const []}) async {
-    final userFuture = reviewRepo
-        .reviewsFor(placeId)
-        .then((rs) => [for (final r in rs) ...r.photoUrls])
-        .catchError((_) => <String>[]);
-    final googleFuture = known.isNotEmpty
-        ? Future.value(known)
-        : placesService
-            .getDetails(placeId)
-            .then((d) => d.photos)
-            .catchError((_) => <PlacePhoto>[]);
-    return (user: await userFuture, google: await googleFuture);
+  /// 一張店面照片：搜尋結果自帶就直接用，沒有就查一次詳細資料（後端有快取）。
+  Future<PlacePhoto?> _photoOf(String placeId, {List<PlacePhoto> known = const []}) async {
+    if (known.isNotEmpty) return known.first;
+    try {
+      final d = await placesService.getDetails(placeId);
+      return d.photos.isEmpty ? null : d.photos.first;
+    } catch (_) {
+      return null;
+    }
   }
 
   Widget _photoSection(String placeId, {List<PlacePhoto> known = const []}) =>
-      FutureBuilder<({List<String> user, List<PlacePhoto> google})>(
-        future: _photosOf(placeId, known: known),
-        builder: (context, snap) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: PhotoStrip(
-            loading: !snap.hasData,
-            userPhotoUrls: snap.data?.user ?? const [],
-            googlePhotos: snap.data?.google ?? const [],
-            height: 140,
-          ),
+      FutureBuilder<PlacePhoto?>(
+        future: _photoOf(placeId, known: known),
+        builder: (context, snap) => StorefrontPhoto(
+          photo: snap.data,
+          loading: snap.connectionState != ConnectionState.done,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         ),
       );
 
