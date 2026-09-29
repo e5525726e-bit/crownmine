@@ -60,6 +60,8 @@ jobs:
           url=$(jq -r .SUPABASE_URL dart_defines.json)
           res=$(curl -sS -X POST "$url/functions/v1/places/search" -H "Content-Type: application/json" -d '{"query":"台北 牛肉麵"}')
           echo "$res" | jq -c '{n: (.places | length), first: .places[0].displayName.text, error}'
+          echo "==> 今日用量（前 8 名，主體已遮蔽）"
+          sql "select regexp_replace(subject, '^(user|ip):[^:]*', '\\1:***') as who, count from public.api_usage where day = current_date order by count desc limit 8;" | jq -c '.[]' || true
           echo "==> 驗證照片"
           photo=$(echo "$res" | jq -r '.places[0].photos[0].name // empty')
           if [ -n "$photo" ]; then

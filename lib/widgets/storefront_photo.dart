@@ -6,6 +6,14 @@ import '../di.dart';
 import '../models/place.dart';
 
 /// 一張店面照片（16:9、圓角），有 Google 照片就用第一張。
+/// 錯誤訊息縮短成一行（例如 HTTP 429）。
+String _short(Object err) {
+  final t = err.toString();
+  final m = RegExp(r'statusCode: (\d+)').firstMatch(t);
+  if (m != null) return 'HTTP ${m.group(1)}';
+  return t.length > 60 ? '${t.substring(0, 60)}…' : t;
+}
+
 class StorefrontPhoto extends StatelessWidget {
   const StorefrontPhoto({
     super.key,
@@ -45,10 +53,23 @@ class StorefrontPhoto extends StatelessWidget {
                               null
                           ? child
                           : Container(color: scheme.surfaceContainerHighest),
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, err, __) => Container(
                         color: scheme.surfaceContainerHighest,
-                        child: Icon(Icons.storefront_outlined,
-                            color: scheme.onSurfaceVariant),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.storefront_outlined,
+                                color: scheme.onSurfaceVariant),
+                            const SizedBox(height: 4),
+                            Text(
+                              '照片載入失敗：${_short(err)}',
+                              style: TextStyle(
+                                  fontSize: 10, color: scheme.onSurfaceVariant),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     // 網頁版原生 <img> 會吃掉觸控：蓋一層攔截讓拖動仍由 App 處理

@@ -21,7 +21,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const LIMITS: Record<string, [number, number]> = {
   details: [100, 500],
   nearby: [300, 1000],
-  photo: [1500, 8000],
+  photo: [3000, 10000],
 };
 const GLOBAL_LIMITS: Record<string, number> = { search: 300 };
 const IP_LIMITS: Record<string, number> = { search: 2000 };
