@@ -35,6 +35,9 @@ void main() {
     expect(place.name, '測試餐廳');
     expect(place.priceLabel, r'$$');
     expect(place.isFood, isTrue);
+    expect(isFoodPlace(['deli', 'food_store', 'store', 'food'], 'deli'), isTrue);
+    expect(isFoodPlace(['supermarket', 'grocery_store', 'food', 'store'], 'supermarket'), isFalse);
+    expect(isFoodPlace(['food_store', 'store', 'food'], 'food_store'), isTrue);
     expect(place.toString().contains('不該出現'), isFalse);
   });
 

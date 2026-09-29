@@ -259,7 +259,9 @@ class _MapScreenState extends State<MapScreen> {
           : reviewRepo.searchReviewedPlaces(q);
       final results = await placesService.searchText(
         full,
-        type: _category.searchType,
+        // 不限 Google 類型（很多小吃店被標成 deli、food_store），只留餐飲業
+        type: _category.searchType ?? 'any',
+        strict: true,
         city: city,
         lat: here?.lat,
         lng: here?.lng,

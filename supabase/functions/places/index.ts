@@ -127,7 +127,9 @@ async function google(path: string, init: RequestInit, mask: string) {
 const FOOD = new Set(["restaurant","cafe","coffee_shop","bakery","bar","pub","wine_bar","meal_takeaway","meal_delivery",
   "food_court","ice_cream_shop","dessert_shop","tea_house","juice_shop","sandwich_shop","steak_house","diner","noodle_shop",
   "food","bar_and_grill","cafeteria","confectionery","donut_shop","bagel_shop","acai_shop","chocolate_shop","candy_store",
-  "snack_bar","bistro","tea_store","dessert_restaurant"]);
+  "snack_bar","bistro","tea_store","dessert_restaurant","deli","food_store"]);
+const NOT_FOOD = new Set(["supermarket","grocery_store","convenience_store","wholesaler","butcher_shop","health_food_store",
+  "department_store","shopping_mall","liquor_store"]);
 // 分類過濾可指定的類型：白名單內或以 _restaurant 結尾
 const FOOD_TYPES = { has: (t: string) => FOOD.has(t) || /^[a-z_]+_restaurant$/.test(t) };
 // 附近搜尋預設涵蓋的餐飲類型（不含 food_store：會撈到超市、肉舖）
@@ -136,7 +138,10 @@ const NEARBY_DEFAULT_TYPES = ["restaurant","cafe","coffee_shop","bakery","bar","
   "bistro","diner","noodle_shop","donut_shop","bagel_shop","cafeteria","bar_and_grill","steak_house","acai_shop"];
 function isFood(p: { types?: string[]; primaryType?: string }) {
   const ok = (t: string) => FOOD.has(t) || t.endsWith("_restaurant");
-  return (p.primaryType && ok(p.primaryType)) || (p.types ?? []).some(ok);
+  if (p.primaryType && ok(p.primaryType) && p.primaryType !== "food_store") return true;
+  const types = p.types ?? [];
+  if (types.some((t) => NOT_FOOD.has(t))) return false;
+  return types.some(ok);
 }
 function filterFood(body: { places?: Array<{ types?: string[]; primaryType?: string }> }) {
   return { places: (body.places ?? []).filter(isFood) };

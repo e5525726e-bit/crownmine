@@ -32,11 +32,30 @@ const Set<String> kFoodTypes = {
   'bistro',
   'tea_store',
   'dessert_restaurant',
+  'deli',
+  'food_store',
+};
+
+/// 有這些類型就不算餐飲（超市、雜貨、便利商店會帶 food／food_store 類型）。
+const Set<String> kNotFoodTypes = {
+  'supermarket',
+  'grocery_store',
+  'convenience_store',
+  'wholesaler',
+  'butcher_shop',
+  'health_food_store',
+  'department_store',
+  'shopping_mall',
+  'liquor_store',
 };
 
 bool isFoodPlace(List<String> types, String? primaryType) {
   bool ok(String t) => kFoodTypes.contains(t) || t.endsWith('_restaurant');
-  if (primaryType != null && ok(primaryType)) return true;
+  // 主類型就是餐飲（例如餐廳附設超市）照算；否則有雜貨類型就排除
+  if (primaryType != null && ok(primaryType) && primaryType != 'food_store') {
+    return true;
+  }
+  if (types.any(kNotFoodTypes.contains)) return false;
   return types.any(ok);
 }
 
