@@ -33,7 +33,9 @@ class _NearbyScreenState extends State<NearbyScreen> {
     if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
       throw Exception('需要定位權限才能找附近的餐廳，請到系統設定開啟');
     }
-    final pos = await Geolocator.getCurrentPosition();
+    final pos = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
     return placesService.searchNearby(
       lat: pos.latitude,
       lng: pos.longitude,

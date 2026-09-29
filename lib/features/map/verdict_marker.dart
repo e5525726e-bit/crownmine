@@ -68,6 +68,83 @@ class VerdictMarkerIcons {
     return BitmapDescriptor.bytes(bytes, width: size.width, height: size.height);
   }
 
+  static BitmapDescriptor? _plain;
+  static BitmapDescriptor? _me;
+
+  /// 使用者目前位置：藍點 + 白邊 + 淡藍光暈（網頁版沒有內建藍點，所以自己畫）。
+  static Future<BitmapDescriptor> myLocationIcon() async {
+    if (_me != null) return _me!;
+    const logical = 28.0;
+    final px = (logical * _dpr).ceil();
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..scale(_dpr);
+    const c = Offset(logical / 2, logical / 2);
+    canvas.drawCircle(c, logical / 2, Paint()..color = const Color(0xFF007AFF).withValues(alpha: 0.18));
+    canvas.drawCircle(c, 9, Paint()..color = Colors.white);
+    canvas.drawCircle(c, 7, Paint()..color = const Color(0xFF007AFF));
+    final image = await recorder.endRecording().toImage(px, px);
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    return _me = BitmapDescriptor.bytes(bytes!.buffer.asUint8List(), width: logical, height: logical);
+  }
+
+  /// 尚無評價的餐飲店：灰色小針、白色叉匙。
+  static Future<BitmapDescriptor> plainIcon() async {
+    if (_plain != null) return _plain!;
+    final (bytes, size) = await renderPlainPng();
+    return _plain = BitmapDescriptor.bytes(bytes, width: size.width, height: size.height);
+  }
+
+  static Future<(Uint8List, Size)> renderPlainPng() async {
+    final food = _tagPictures['food'] ??=
+        await vg.loadPicture(const SvgAssetLoader('assets/icons/food.svg'), null);
+    const head = kPinHeadSize * 0.72;
+    const tail = head * 0.55;
+    const margin = 5.0;
+    const width = head + margin * 2;
+    const height = head + tail + margin;
+    final px = Size((width * _dpr).ceilToDouble(), (height * _dpr).ceilToDouble());
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..scale(_dpr);
+    const headCenter = Offset(width / 2, margin + head / 2);
+    const tip = Offset(width / 2, height);
+    const r = head / 2;
+
+    canvas.drawOval(
+      Rect.fromCenter(center: tip - const Offset(0, 1), width: head * 0.5, height: head * 0.16),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.22)
+        ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 2),
+    );
+    final body = Path()
+      ..addOval(Rect.fromCircle(center: headCenter, radius: r))
+      ..moveTo(headCenter.dx - r * 0.55, headCenter.dy + r * 0.83)
+      ..lineTo(tip.dx, tip.dy)
+      ..lineTo(headCenter.dx + r * 0.55, headCenter.dy + r * 0.83)
+      ..close();
+    canvas.drawPath(body, Paint()..color = const Color(0xFF8E8E93));
+    canvas.drawPath(
+      body,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = Colors.white,
+    );
+    const iconSize = head * 0.6;
+    canvas
+      ..save()
+      ..translate(headCenter.dx - iconSize / 2, headCenter.dy - iconSize / 2)
+      ..scale(iconSize / food.size.width, iconSize / food.size.height)
+      ..drawPicture(food.picture)
+      ..restore();
+
+    final image = await recorder.endRecording().toImage(px.width.toInt(), px.height.toInt());
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    return (bytes!.buffer.asUint8List(), const Size(width, height));
+  }
+
   /// 畫出大頭針的 PNG（回傳位元組與邏輯尺寸）。獨立出來方便預覽與測試。
   /// [igBadge] 為 true 時在左上角加 IG 徽章。
   static Future<(Uint8List, Size)> renderPng(Verdict v, MarkerTier tier, int total,
