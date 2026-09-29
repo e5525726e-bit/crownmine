@@ -6,12 +6,14 @@ import '../../di.dart';
 import '../../models/food_category.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
+import '../../models/tw_city.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/category_chips.dart';
 import '../../widgets/google_attribution.dart';
 import '../../widgets/inset_group.dart';
 import '../../widgets/inset_list_view.dart';
 import '../../widgets/place_thumbnail.dart';
+import '../../widgets/press_scale.dart';
 import '../../widgets/verdict_summary.dart';
 import '../place/place_detail_screen.dart';
 
@@ -30,6 +32,12 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   _Mode _mode = _Mode.google;
   FoodCategory _category = FoodCategory.all;
+
+  /// 搜尋限制在這個縣市；null 代表全台灣。
+  TwCity? _city;
+
+  /// 縣市是自動定位來的（true）還是使用者手動選的（false）。
+  bool _cityAuto = true;
   final _controller = TextEditingController();
   Future<List<Place>>? _googleFuture;
   Future<List<ReviewedPlace>>? _appFuture;
@@ -39,6 +47,86 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _appFuture = reviewRepo.searchReviewedPlaces('');
+    _detectCity();
+  }
+
+  /// 用定位判斷所在縣市（先用上次已知位置，沒有再實際定位一次）。
+  Future<void> _detectCity() async {
+    try {
+      var pos = await Geolocator.getLastKnownPosition();
+      if (pos == null) {
+        var perm = await Geolocator.checkPermission();
+        if (perm == LocationPermission.denied) {
+          perm = await Geolocator.requestPermission();
+        }
+        if (perm == LocationPermission.denied ||
+            perm == LocationPermission.deniedForever) {
+          return;
+        }
+        pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: Duration(seconds: 8)),
+        );
+      }
+      final c = cityAt(pos.latitude, pos.longitude) ??
+          nearestCity(pos.latitude, pos.longitude);
+      if (!mounted || !_cityAuto) return;
+      setState(() => _city = c);
+    } catch (_) {
+      // 定位失敗就維持全台灣
+    }
+  }
+
+  Future<void> _pickCity() async {
+    final picked = await showModalBottomSheet<Object>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => ListView(
+        children: [
+          ListTile(
+            leading: const Icon(CupertinoIcons.location_fill),
+            title: const Text('依目前定位'),
+            trailing: _cityAuto ? const Icon(CupertinoIcons.checkmark) : null,
+            onTap: () => Navigator.pop(context, 'auto'),
+          ),
+          ListTile(
+            leading: const Icon(CupertinoIcons.globe),
+            title: const Text('全台灣'),
+            trailing: !_cityAuto && _city == null
+                ? const Icon(CupertinoIcons.checkmark)
+                : null,
+            onTap: () => Navigator.pop(context, 'all'),
+          ),
+          const Divider(height: 1),
+          for (final c in kTwCities)
+            ListTile(
+              title: Text(c.name),
+              trailing: !_cityAuto && _city == c
+                  ? const Icon(CupertinoIcons.checkmark)
+                  : null,
+              onTap: () => Navigator.pop(context, c),
+            ),
+        ],
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      if (picked == 'auto') {
+        _cityAuto = true;
+        _city = null;
+      } else if (picked == 'all') {
+        _cityAuto = false;
+        _city = null;
+      } else {
+        _cityAuto = false;
+        _city = picked as TwCity;
+      }
+    });
+    if (picked == 'auto') {
+      await _detectCity();
+    }
+    _submit();
   }
 
   @override
@@ -60,22 +148,18 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-  /// 有分類時盡量以使用者附近為中心（只用上次已知的位置，不會跳出權限詢問）。
+  /// 只列出所在縣市的店：使用者文字裡有提到別的縣市就以文字為準，
+  /// 否則用定位到（或手動選）的縣市；都沒有就找全台灣。
   Future<List<Place>> _searchGoogle(String query) async {
-    double? lat, lng;
-    if (!_category.isAll) {
-      try {
-        final pos = await Geolocator.getLastKnownPosition();
-        lat = pos?.latitude;
-        lng = pos?.longitude;
-      } catch (_) {}
-    }
+    final typed = cityInText(_controller.text);
+    final city = typed ?? _city;
+    final full = city != null && !city.mentionedIn(query)
+        ? '${city.name} $query'
+        : query;
     return placesService.searchText(
-      query,
-      lat: lat,
-      lng: lng,
-      radiusMeters: lat == null ? null : 10000,
+      full,
       type: _category.searchType,
+      city: city,
     );
   }
 
@@ -121,6 +205,29 @@ class _SearchScreenState extends State<SearchScreen> {
                 backgroundColor: theme.cardTheme.color,
               ),
             ),
+            if (_mode == _Mode.google)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Row(
+                  children: [
+                    _CityChip(
+                      label: _city?.name ?? (_cityAuto ? '定位中…' : '全台灣'),
+                      auto: _cityAuto,
+                      onTap: _pickCity,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _city == null
+                            ? '會列出全台灣的結果'
+                            : '只列出${_city!.name}的店家',
+                        style: theme.textTheme.labelSmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: SizedBox(
@@ -167,11 +274,15 @@ class _SearchScreenState extends State<SearchScreen> {
         onRetry: _submit,
         empty: const _Hint(
           icon: CupertinoIcons.search,
-          text: '輸入店名或地區，或點上面的種類開始找店家。\n只會列出餐飲業，不會顯示 Google 的評價。',
+          text: '輸入店名，或點上面的種類開始找店家。\n只會列出你所在縣市的餐飲業，不會顯示 Google 的評價。',
         ),
         builder: (context, places) {
           if (places.isEmpty) {
-            return const _Hint(icon: CupertinoIcons.search, text: '找不到符合的餐飲店家');
+            return _Hint(
+                icon: CupertinoIcons.search,
+                text: _city == null
+                    ? '找不到符合的餐飲店家'
+                    : '在${_city!.name}找不到符合的店家。\n點上面的縣市可以換地區或改成全台灣。');
           }
           return InsetListView(
             itemCount: places.length,
@@ -239,6 +350,44 @@ class _SearchScreenState extends State<SearchScreen> {
           );
         },
       );
+}
+
+class _CityChip extends StatelessWidget {
+  const _CityChip({required this.label, required this.auto, required this.onTap});
+  final String label;
+  final bool auto;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PressScale(
+      onTap: onTap,
+      haptic: true,
+      scale: 0.95,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(auto ? CupertinoIcons.location_fill : CupertinoIcons.map_pin,
+                size: 14, color: theme.colorScheme.primary),
+            const SizedBox(width: 4),
+            Text(label,
+                style: theme.textTheme.labelLarge
+                    ?.copyWith(color: theme.colorScheme.primary)),
+            const SizedBox(width: 2),
+            Icon(CupertinoIcons.chevron_down,
+                size: 12, color: theme.colorScheme.primary),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _Hint extends StatelessWidget {

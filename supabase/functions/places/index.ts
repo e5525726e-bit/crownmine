@@ -159,25 +159,39 @@ Deno.serve(async (req) => {
   let run: () => Promise<{ ok: boolean; status: number; body: unknown }>;
 
   if (sub === "search" && req.method === "POST") {
-    const { query, lat, lng, radius, type } = await req.json().catch(() => ({}));
+    const { query, lat, lng, radius, type, bounds } = await req.json().catch(() => ({}));
     const q = String(query ?? "").trim();
     if (!q) return fail("缺少 query");
     const hasPos = typeof lat === "number" && typeof lng === "number";
     const r = Math.min(20000, Math.max(100, Number(radius ?? 5000)));
-    const near = hasPos ? `${lat.toFixed(2)}:${lng.toFixed(2)}:${Math.round(r / 500)}` : "tw";
+    // 縣市範圍（嚴格限制）：四個數字都要合理才採用
+    const b = bounds && typeof bounds === "object" ? bounds as Record<string, unknown> : null;
+    const num = (v: unknown) => typeof v === "number" && Number.isFinite(v) ? v : null;
+    const rect = b && num(b.minLat) !== null && num(b.minLng) !== null && num(b.maxLat) !== null && num(b.maxLng) !== null
+      && (b.minLat as number) < (b.maxLat as number) && (b.minLng as number) < (b.maxLng as number)
+      ? { low: { latitude: b.minLat as number, longitude: b.minLng as number }, high: { latitude: b.maxLat as number, longitude: b.maxLng as number } }
+      : null;
+    const near = rect
+      ? `rect:${rect.low.latitude}:${rect.low.longitude}:${rect.high.latitude}:${rect.high.longitude}`
+      : hasPos ? `${lat.toFixed(2)}:${lng.toFixed(2)}:${Math.round(r / 500)}` : "tw";
     // 類型：未指定 → 餐廳；"any" → 不限（靠關鍵字，結果仍會過濾成餐飲）；其他需在白名單內
     const t = typeof type === "string" && type ? type : "restaurant";
     const includedType = t === "any" ? undefined : (FOOD_TYPES.has(t) ? t : "restaurant");
     key = `search:${q.toLowerCase()}:${near}:${includedType ?? "any"}`;
     feature = "search";
     run = async () => {
+      const location = rect
+        ? { locationRestriction: { rectangle: rect } }
+        : {
+          locationBias: !hasPos
+            ? { rectangle: { low: { latitude: 21.8, longitude: 118.2 }, high: { latitude: 26.4, longitude: 122.1 } } }
+            : { circle: { center: { latitude: lat, longitude: lng }, radius: r } },
+        };
       const r2 = await google("places:searchText", {
         method: "POST",
         body: JSON.stringify({
           textQuery: q, ...(includedType ? { includedType } : {}), regionCode: "TW", languageCode: "zh-TW", pageSize: 20,
-          locationBias: !hasPos
-            ? { rectangle: { low: { latitude: 21.8, longitude: 118.2 }, high: { latitude: 26.4, longitude: 122.1 } } }
-            : { circle: { center: { latitude: lat, longitude: lng }, radius: r } },
+          ...location,
         }),
       }, SEARCH_MASK);
       return r2.ok ? { ...r2, body: filterFood(r2.body as { places?: [] }) } : r2;

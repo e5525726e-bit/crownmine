@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/place.dart';
+import '../models/tw_city.dart';
 
 class PlacesException implements Exception {
   PlacesException(this.message);
@@ -37,13 +38,15 @@ class PlacesService {
       };
 
   /// 文字搜尋。[type] 是 Google 類型（限定該類型）、'any' 表示不限、null 則預設餐廳。
-  /// 有座標時以該點為中心（[radiusMeters] 內優先）。
+  /// [city] 有給時嚴格限制在該縣市範圍內（並再用地址過濾一次）；
+  /// 否則有座標時以該點為中心（[radiusMeters] 內優先）。
   Future<List<Place>> searchText(
     String query, {
     double? lat,
     double? lng,
     double? radiusMeters,
     String? type,
+    TwCity? city,
   }) async {
     final res = await _client.post(
       Uri.parse('$baseUrl/search'),
@@ -54,9 +57,18 @@ class PlacesService {
         if (lng != null) 'lng': lng,
         if (radiusMeters != null) 'radius': radiusMeters,
         if (type != null) 'type': type,
+        if (city != null)
+          'bounds': {
+            'minLat': city.minLat,
+            'minLng': city.minLng,
+            'maxLat': city.maxLat,
+            'maxLng': city.maxLng,
+          },
       }),
     );
-    return _parsePlaces(res);
+    final places = _parsePlaces(res);
+    if (city == null) return places;
+    return places.where((p) => city.inAddress(p.address)).toList();
   }
 
   /// 附近搜尋。[types] 為 Google 類型清單；空的話由後端用預設的餐飲類型。
