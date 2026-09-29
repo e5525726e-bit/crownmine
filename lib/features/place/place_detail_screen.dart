@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -114,7 +115,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
           child: Text('謝謝你留下真實的意見。把這家店分享給朋友，讓更多人知道。'),
         ),
         actions: [
-          CupertinoDialogAction(onPressed: () => Navigator.pop(ctx), child: const Text('好')),
+          CupertinoDialogAction(
+              onPressed: () => Navigator.pop(ctx), child: const Text('好')),
           CupertinoDialogAction(
             isDefaultAction: true,
             onPressed: () {
@@ -138,7 +140,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
     final summary = parts.isEmpty ? '還沒有人評價，來當第一個' : parts.join('、');
     await SharePlus.instance.share(ShareParams(
       title: '${d.place.name}｜美食地圖',
-      text: '「${d.place.name}」在美食地圖上的評價：$summary\n${Env.placeShareUrl(d.place.id)}',
+      text:
+          '「${d.place.name}」在美食地圖上的評價：$summary\n${Env.placeShareUrl(d.place.id)}',
     ));
   }
 
@@ -219,7 +222,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
             ),
           ),
           body: Builder(
-            builder: (context) => RefreshIndicator(
+            builder: (context) => PointerInterceptor(
+                child: RefreshIndicator(
               onRefresh: () async {
                 _reload();
                 await _future;
@@ -317,11 +321,10 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     ),
                 ],
               ),
-            ),
+            )),
           ),
         );
       },
     );
   }
 }
-

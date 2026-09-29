@@ -165,8 +165,8 @@ class _MapScreenState extends State<MapScreen> {
         pos = LocationHub.last;
       }
       if (pos == null) return;
-      final c = await _cityFromNearby(pos.lat, pos.lng) ??
-          cityAt(pos.lat, pos.lng);
+      final c =
+          await _cityFromNearby(pos.lat, pos.lng) ?? cityAt(pos.lat, pos.lng);
       if (!mounted || !_cityAuto) return;
       setState(() {
         _city = c;
@@ -191,7 +191,8 @@ class _MapScreenState extends State<MapScreen> {
     final picked = await showModalBottomSheet<Object>(
       context: context,
       showDragHandle: true,
-      builder: (context) => ListView(
+      builder: (context) => PointerInterceptor(
+          child: ListView(
         children: [
           ListTile(
             leading: const Icon(CupertinoIcons.location_fill),
@@ -217,7 +218,7 @@ class _MapScreenState extends State<MapScreen> {
               onTap: () => Navigator.pop(context, c),
             ),
         ],
-      ),
+      )),
     );
     if (picked == null || !mounted) return;
     setState(() {
@@ -479,7 +480,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// 一張店面照片：搜尋結果自帶就直接用，沒有就查一次詳細資料（後端有快取）。
-  Future<PlacePhoto?> _photoOf(String placeId, {List<PlacePhoto> known = const []}) async {
+  Future<PlacePhoto?> _photoOf(String placeId,
+      {List<PlacePhoto> known = const []}) async {
     if (known.isNotEmpty) return known.first;
     try {
       final d = await placesService.getDetails(placeId);
@@ -503,42 +505,44 @@ class _MapScreenState extends State<MapScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _photoSection(p.id, known: p.photos),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(p.name, style: Theme.of(ctx).textTheme.titleLarge),
-                  Text(
-                    [
-                      if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
-                      p.address
-                    ].join(' · '),
-                    style: Theme.of(ctx).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text('還沒有人評價這家店',
-                      style: Theme.of(ctx).textTheme.bodyMedium),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _open(p.id, initial: p);
-                    },
-                    icon: const Icon(CupertinoIcons.square_pencil),
-                    label: const Text('查看店家並寫第一則評價'),
-                  ),
-                ],
+      builder: (ctx) => PointerInterceptor(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _photoSection(p.id, known: p.photos),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p.name, style: Theme.of(ctx).textTheme.titleLarge),
+                    Text(
+                      [
+                        if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
+                        p.address
+                      ].join(' · '),
+                      style: Theme.of(ctx).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text('還沒有人評價這家店',
+                        style: Theme.of(ctx).textTheme.bodyMedium),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _open(p.id, initial: p);
+                      },
+                      icon: const Icon(CupertinoIcons.square_pencil),
+                      label: const Text('查看店家並寫第一則評價'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -548,50 +552,53 @@ class _MapScreenState extends State<MapScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _photoSection(p.placeId),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      VerdictIcon(p.stats.dominant!, size: 36),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(p.name,
-                                style: Theme.of(ctx).textTheme.titleLarge),
-                            Text(p.address,
-                                style: Theme.of(ctx).textTheme.bodySmall),
-                          ],
+      builder: (ctx) => PointerInterceptor(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _photoSection(p.placeId),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        VerdictIcon(p.stats.dominant!, size: 36),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(p.name,
+                                  style: Theme.of(ctx).textTheme.titleLarge),
+                              Text(p.address,
+                                  style: Theme.of(ctx).textTheme.bodySmall),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  VerdictSummary(p.stats),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _open(p.placeId);
-                    },
-                    icon: const Icon(CupertinoIcons.chevron_right_circle_fill),
-                    label: Text('查看店家與 ${p.stats.total} 則評價'),
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    VerdictSummary(p.stats),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _open(p.placeId);
+                      },
+                      icon:
+                          const Icon(CupertinoIcons.chevron_right_circle_fill),
+                      label: Text('查看店家與 ${p.stats.total} 則評價'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -645,42 +652,43 @@ class _MapScreenState extends State<MapScreen> {
               top: barInsets(context).top + 6,
               child: PointerInterceptor(
                 child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: CupertinoSearchTextField(
-                            controller: _searchCtl,
-                            focusNode: _searchFocus,
-                            placeholder: _city != null
-                                ? '搜尋${_city!.name}的店家'
-                                : _abroad && _cityAuto
-                                    ? '搜尋附近的店家'
-                                    : '搜尋店名或種類',
-                            onSubmitted: _submitSearch,
-                            onSuffixTap: _clearSearch,
-                            style: theme.textTheme.bodyLarge,
-                            backgroundColor: theme.cardTheme.color,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: CupertinoSearchTextField(
+                              controller: _searchCtl,
+                              focusNode: _searchFocus,
+                              placeholder: _city != null
+                                  ? '搜尋${_city!.name}的店家'
+                                  : _abroad && _cityAuto
+                                      ? '搜尋附近的店家'
+                                      : '搜尋店名或種類',
+                              onSubmitted: _submitSearch,
+                              onSuffixTap: _clearSearch,
+                              style: theme.textTheme.bodyLarge,
+                              backgroundColor: theme.cardTheme.color,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        _CityChip(
-                          label: _city?.name ??
-                              (_cityAuto
-                                  ? (_abroad ? '目前位置附近' : '定位中…')
-                                  : '全台灣'),
-                          auto: _cityAuto,
-                          onTap: _pickCity,
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          _CityChip(
+                            label: _city?.name ??
+                                (_cityAuto
+                                    ? (_abroad ? '目前位置附近' : '定位中…')
+                                    : '全台灣'),
+                            auto: _cityAuto,
+                            onTap: _pickCity,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  CategoryChips(selected: _category, onChanged: _pickCategory),
-                ],
-              ),
+                    const SizedBox(height: 8),
+                    CategoryChips(
+                        selected: _category, onChanged: _pickCategory),
+                  ],
+                ),
               ),
             ),
             // 下方可拉起的清單
@@ -716,8 +724,8 @@ class _MapScreenState extends State<MapScreen> {
       ),
       child: ListView(
         controller: scroll,
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.paddingOf(context).bottom + 80),
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 80),
         children: [
           Center(
             child: Container(
@@ -725,7 +733,8 @@ class _MapScreenState extends State<MapScreen> {
               width: 36,
               height: 5,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
@@ -793,8 +802,8 @@ class _MapScreenState extends State<MapScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
               child: Text(_searchError ?? _error!,
-                  style:
-                      text.labelSmall?.copyWith(color: theme.colorScheme.error)),
+                  style: text.labelSmall
+                      ?.copyWith(color: theme.colorScheme.error)),
             ),
           ...items,
           const GoogleAttribution(),
@@ -914,8 +923,7 @@ class _MapScreenState extends State<MapScreen> {
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('尚無評價',
-                        style: Theme.of(context).textTheme.labelSmall),
+                    Text('尚無評價', style: Theme.of(context).textTheme.labelSmall),
                     const Chevron(),
                   ],
                 ),

@@ -63,7 +63,6 @@ jobs:
           echo "==> 驗證照片"
           photo=$(echo "$res" | jq -r '.places[0].photos[0].name // empty')
           if [ -n "$photo" ]; then
-            curl -sS -o /dev/null -w 'photo endpoint: HTTP %{http_code} -> %{redirect_url}\n' "$url/functions/v1/places/photo?name=$photo&w=400"
-            curl -sSL -o /dev/null -w 'photo followed: HTTP %{http_code} type=%{content_type} bytes=%{size_download}\n' "$url/functions/v1/places/photo?name=$photo&w=400"
-            curl -sSI "$url/functions/v1/places/photo?name=$photo&w=400" | grep -i "access-control\|location\|x-cache" || true
+            curl -sS -o /dev/null -D /tmp/h -w 'photo endpoint: HTTP %{http_code} type=%{content_type} bytes=%{size_download}\n' "$url/functions/v1/places/photo?name=$photo&w=400"
+            grep -i "access-control-allow-origin\|x-cache\|cache-control" /tmp/h || true
           fi

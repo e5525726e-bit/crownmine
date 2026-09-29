@@ -7,7 +7,7 @@
 //   POST /places/search   {query, lat?, lng?}
 //   POST /places/nearby   {lat, lng, radius}
 //   GET  /places/details?id=<place_id>
-//   GET  /places/photo?name=<photo name>&w=<maxWidthPx>   → 302 轉到實際圖片
+//   GET  /places/photo?name=<photo name>&w=<maxWidthPx>   → 直接回傳圖片內容（後端代抓）
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const GOOGLE_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? "";
@@ -152,7 +152,18 @@ Deno.serve(async (req) => {
       if (!uri) return fail("取得照片失敗", 502);
       await cachePut(key, uri);
     }
-    return new Response(null, { status: 302, headers: { Location: uri, "Cache-Control": "public, max-age=86400", ...CORS } });
+    // 直接把圖片內容抓回來送給 App（瀏覽器對 Google 圖片主機有跨網域限制，轉址會被擋）
+    const img = await fetch(uri);
+    if (!img.ok) return fail("取得照片失敗", 502);
+    return new Response(img.body, {
+      status: 200,
+      headers: {
+        "Content-Type": img.headers.get("content-type") ?? "image/jpeg",
+        "Cache-Control": "public, max-age=604800, immutable",
+        "X-Cache": "PROXY",
+        ...CORS,
+      },
+    });
   }
 
   // 其餘：搜尋、附近、詳細資料
