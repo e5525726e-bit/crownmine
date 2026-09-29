@@ -142,6 +142,10 @@ class PlaceStats {
   /// 至少三分之一的評價標了這個標籤，就算是這家店的特徵（地圖徽章用）。
   bool isTagged(ReviewTag t) => tagCount(t) > 0 && tagCount(t) * 3 >= total;
 
+  /// 這家店的特徵標籤（達到 [isTagged] 門檻者，依 [ReviewTag.values] 順序）。
+  List<ReviewTag> get featureTags =>
+      [for (final t in ReviewTag.values) if (isTagged(t)) t];
+
   /// 有任何一種標籤被標過。
   bool get hasTags => ReviewTag.values.any((t) => tagCount(t) > 0);
 

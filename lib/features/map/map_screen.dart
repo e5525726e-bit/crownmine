@@ -156,7 +156,7 @@ class _MapScreenState extends State<MapScreen> {
           markerId: MarkerId(p.placeId),
           position: LatLng(p.lat!, p.lng!),
           icon: await VerdictMarkerIcons.icon(dominant, p.stats.total,
-              igBadge: p.stats.isTagged(ReviewTag.ig)),
+              tags: p.stats.featureTags),
           anchor: VerdictMarkerIcons.anchor,
           zIndexInt: 1 + p.stats.total,
           onTap: () => _showPlace(p),

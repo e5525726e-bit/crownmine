@@ -56,18 +56,22 @@ class VerdictMarkerIcons {
 
   static final Map<String, PictureInfo> _tagPictures = {};
 
-  /// 依標記種類、評價數、是否為 IG 網紅店取得圖示（同一組合只畫一次）。
+  /// 最多疊幾個附加標籤徽章（右上角留給評價數）。
+  static const int maxTagBadges = 3;
+
+  /// 依標記種類、評價數、這家店的特徵標籤取得圖示（同一組合只畫一次）。
   static Future<BitmapDescriptor> icon(Verdict v, int total,
-      {bool igBadge = false}) async {
+      {List<ReviewTag> tags = const []}) async {
     final tier = MarkerTier.forCount(total);
+    final badges = tags.take(maxTagBadges).toList();
     final key =
-        '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}-${igBadge ? 'ig' : ''}';
-    return _cache[key] ??= await _render(v, tier, total, igBadge);
+        '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}-${badges.map((t) => t.dbValue).join(',')}';
+    return _cache[key] ??= await _render(v, tier, total, badges);
   }
 
   static Future<BitmapDescriptor> _render(
-      Verdict v, MarkerTier tier, int total, bool igBadge) async {
-    final (bytes, size) = await renderPng(v, tier, total, igBadge: igBadge);
+      Verdict v, MarkerTier tier, int total, List<ReviewTag> tags) async {
+    final (bytes, size) = await renderPng(v, tier, total, tags: tags);
     return BitmapDescriptor.bytes(bytes,
         width: size.width, height: size.height);
   }
@@ -159,16 +163,16 @@ class VerdictMarkerIcons {
   }
 
   /// 畫出大頭針的 PNG（回傳位元組與邏輯尺寸）。獨立出來方便預覽與測試。
-  /// [igBadge] 為 true 時在左上角加 IG 徽章。
+  /// [tags] 依序疊在左上、左下、右下（最多 [maxTagBadges] 個）。
   static Future<(Uint8List, Size)> renderPng(
       Verdict v, MarkerTier tier, int total,
-      {bool igBadge = false}) async {
+      {List<ReviewTag> tags = const []}) async {
     final info =
         _pictures[v] ??= await vg.loadPicture(SvgAssetLoader(v.asset), null);
-    PictureInfo? ig;
-    if (igBadge) {
-      ig = _tagPictures[ReviewTag.ig.asset] ??=
-          await vg.loadPicture(SvgAssetLoader(ReviewTag.ig.asset), null);
+    final badges = <PictureInfo>[];
+    for (final t in tags.take(maxTagBadges)) {
+      badges.add(_tagPictures[t.asset] ??=
+          await vg.loadPicture(SvgAssetLoader(t.asset), null));
     }
 
     final head = kPinHeadSize * tier.scale; // 針頭直徑
@@ -223,18 +227,19 @@ class VerdictMarkerIcons {
       ..drawPicture(info.picture)
       ..restore();
 
-    // IG 網紅店徽章（左上角）
-    if (ig != null) {
+    // 附加標籤徽章：左上 → 左下 → 右下（右上留給評價數）
+    const slots = [Offset(-0.72, -0.72), Offset(-0.95, 0.35), Offset(0.95, 0.35)];
+    for (var i = 0; i < badges.length; i++) {
+      final pic = badges[i];
       final r = outerR * 0.5;
-      final c =
-          Offset(headCenter.dx - outerR * 0.72, headCenter.dy - outerR * 0.72);
+      final c = headCenter + slots[i] * outerR;
       canvas.drawCircle(c, r + 1.5, Paint()..color = Colors.white);
       canvas.drawCircle(c, r, Paint()..color = Colors.white);
       canvas
         ..save()
         ..translate(c.dx - r * 0.8, c.dy - r * 0.8)
-        ..scale(r * 1.6 / ig.size.width, r * 1.6 / ig.size.height)
-        ..drawPicture(ig.picture)
+        ..scale(r * 1.6 / pic.size.width, r * 1.6 / pic.size.height)
+        ..drawPicture(pic.picture)
         ..restore();
     }
 
