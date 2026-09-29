@@ -5,7 +5,7 @@ import '../models/verdict.dart';
 import 'tag_icon.dart';
 import 'verdict_icon.dart';
 
-/// 五種核心判斷的數量，加上附加標籤被標的次數。
+/// 四種核心判斷的數量，加上附加標籤被標的次數。
 /// compact 版用在列表右側，完整版用在店家頁。
 class VerdictSummary extends StatelessWidget {
   const VerdictSummary(this.stats, {super.key, this.compact = false});

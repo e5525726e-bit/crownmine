@@ -91,7 +91,7 @@ class ReviewedPlace {
       );
 }
 
-/// 一家店的五種核心判斷各有幾個，以及各種附加標籤各被標了幾次。
+/// 一家店的四種核心判斷各有幾個，以及各種附加標籤各被標了幾次。
 class PlaceStats {
   const PlaceStats({
     this.crowns = 0,
@@ -99,6 +99,7 @@ class PlaceStats {
     this.mines = 0,
     this.poops = 0,
     this.richs = 0,
+    this.fires = 0,
     this.igs = 0,
     this.photogenics = 0,
     this.dates = 0,
@@ -109,11 +110,12 @@ class PlaceStats {
   final int mines;
   final int poops;
   final int richs;
+  final int fires;
   final int igs;
   final int photogenics;
   final int dates;
 
-  int get total => crowns + richs + greens + mines + poops;
+  int get total => crowns + richs + greens + mines;
 
   /// 最多人給的標記；平手時依 [Verdict.values] 的順序（皇冠優先）。
   Verdict? get dominant {
@@ -130,13 +132,14 @@ class PlaceStats {
         Verdict.rich => richs,
         Verdict.green => greens,
         Verdict.mine => mines,
-        Verdict.poop => poops,
       };
 
   int tagCount(ReviewTag t) => switch (t) {
+        ReviewTag.fire => fires,
         ReviewTag.ig => igs,
         ReviewTag.photogenic => photogenics,
         ReviewTag.date => dates,
+        ReviewTag.poop => poops,
       };
 
   /// 至少三分之一的評價標了這個標籤，就算是這家店的特徵（地圖徽章用）。
@@ -157,6 +160,7 @@ class PlaceStats {
         igs: (r?['igs'] as num?)?.toInt() ?? 0,
         photogenics: (r?['photogenics'] as num?)?.toInt() ?? 0,
         richs: (r?['richs'] as num?)?.toInt() ?? 0,
+        fires: (r?['fires'] as num?)?.toInt() ?? 0,
         dates: (r?['dates'] as num?)?.toInt() ?? 0,
       );
 }

@@ -27,7 +27,7 @@ void main() {
     primaryType: 'restaurant',
   );
 
-  testWidgets('寫評價頁顯示五種標記與所有標籤且可以選取', (tester) async {
+  testWidgets('寫評價頁顯示四種標記與所有標籤且可以選取', (tester) async {
     _phone(tester);
     await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));
     await tester.pumpAndSettle();
@@ -40,13 +40,13 @@ void main() {
       expect(find.text(t.label), findsOneWidget);
     }
 
-    await tester.ensureVisible(find.text(Verdict.poop.label));
+    await tester.ensureVisible(find.text(Verdict.mine.label));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(Verdict.poop.label));
+    await tester.tap(find.text(Verdict.mine.label));
     await tester.pumpAndSettle();
     // 選取後標籤會以該標記的顏色加粗顯示
-    final label = tester.widget<Text>(find.text(Verdict.poop.label));
-    expect(label.style?.color, Verdict.poop.color);
+    final label = tester.widget<Text>(find.text(Verdict.mine.label));
+    expect(label.style?.color, Verdict.mine.color);
   });
 
   testWidgets('沒選標記就送出會提示', (tester) async {

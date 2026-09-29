@@ -6,6 +6,7 @@
 create extension if not exists pg_trgm;
 
 -- 四種核心判斷：皇冠（真心推薦）、綠燈（普通中規中矩）、地雷（普通又貴）、大便（難吃／態度環境很差）
+-- poop 已改為附加標籤，enum 值保留只為相容舊資料（下方 check 禁止再寫入）
 create type public.verdict as enum ('crown', 'rich', 'green', 'mine', 'poop');
 
 -- ---------------------------------------------------------------------
@@ -59,12 +60,12 @@ create table public.reviews (
   id           uuid primary key default gen_random_uuid(),
   place_id     text not null references public.places (place_id) on delete cascade,
   user_id      uuid not null references public.profiles (id) on delete cascade,
-  verdict      public.verdict not null,
+  verdict      public.verdict not null check (verdict <> 'poop'),
   body         text not null default '' check (char_length(body) <= 2000),   -- 留言選填
   price_paid   integer check (price_paid is null or price_paid between 0 and 100000),
   visited_on   date,
   receipt_path text,                       -- 消費證明（私有 bucket）
-  tags         text[] not null default '{}' check (tags <@ array['ig', 'photogenic', 'date']),  -- 附加標籤：IG 網紅店、網美店、適合約會
+  tags         text[] not null default '{}' check (tags <@ array['fire', 'ig', 'photogenic', 'date', 'poop']),  -- 附加標籤：超好吃／必吃、IG 網紅店、網美店、適合約會、難吃／態度環境很差
   status       text not null default 'visible' check (status in ('visible', 'hidden', 'removed')),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now(),
@@ -140,7 +141,8 @@ select
   count(*) filter (where verdict = 'rich')  as richs,
   count(*) filter (where verdict = 'green') as greens,
   count(*) filter (where verdict = 'mine')  as mines,
-  count(*) filter (where verdict = 'poop')  as poops,
+  count(*) filter (where 'poop' = any(tags))       as poops,
+  count(*) filter (where 'fire' = any(tags))       as fires,
   count(*) filter (where 'ig' = any(tags))         as igs,
   count(*) filter (where 'photogenic' = any(tags)) as photogenics,
   count(*) filter (where 'date' = any(tags))       as dates
@@ -152,14 +154,14 @@ group by place_id;
 create or replace function public.search_reviewed_places(q text)
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where q = '' or p.name ilike '%' || q || '%' or p.address ilike '%' || q || '%'
-  order by (s.crowns + s.richs + s.greens + s.mines + s.poops) desc, p.name
+  order by (s.crowns + s.richs + s.greens + s.mines) desc, p.name
   limit 50;
 $$;
 
@@ -170,15 +172,15 @@ create or replace function public.places_in_bounds(
 )
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where p.lat between min_lat and max_lat
     and p.lng between min_lng and max_lng
-  order by (s.crowns + s.richs + s.greens + s.mines + s.poops) desc
+  order by (s.crowns + s.richs + s.greens + s.mines) desc
   limit 200;
 $$;
 
