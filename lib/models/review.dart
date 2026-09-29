@@ -91,7 +91,7 @@ class ReviewedPlace {
       );
 }
 
-/// 一家店的四種核心判斷各有幾個，以及兩種附加標籤各被標了幾次。
+/// 一家店的四種核心判斷各有幾個，以及各種附加標籤各被標了幾次。
 class PlaceStats {
   const PlaceStats({
     this.crowns = 0,
@@ -100,6 +100,8 @@ class PlaceStats {
     this.poops = 0,
     this.igs = 0,
     this.photogenics = 0,
+    this.richs = 0,
+    this.dates = 0,
   });
 
   final int crowns;
@@ -108,6 +110,8 @@ class PlaceStats {
   final int poops;
   final int igs;
   final int photogenics;
+  final int richs;
+  final int dates;
 
   int get total => crowns + greens + mines + poops;
 
@@ -131,10 +135,15 @@ class PlaceStats {
   int tagCount(ReviewTag t) => switch (t) {
         ReviewTag.ig => igs,
         ReviewTag.photogenic => photogenics,
+        ReviewTag.rich => richs,
+        ReviewTag.date => dates,
       };
 
   /// 至少三分之一的評價標了這個標籤，就算是這家店的特徵（地圖徽章用）。
   bool isTagged(ReviewTag t) => tagCount(t) > 0 && tagCount(t) * 3 >= total;
+
+  /// 有任何一種標籤被標過。
+  bool get hasTags => ReviewTag.values.any((t) => tagCount(t) > 0);
 
   factory PlaceStats.fromRow(Map<String, dynamic>? r) => PlaceStats(
         crowns: (r?['crowns'] as num?)?.toInt() ?? 0,
@@ -143,5 +152,7 @@ class PlaceStats {
         poops: (r?['poops'] as num?)?.toInt() ?? 0,
         igs: (r?['igs'] as num?)?.toInt() ?? 0,
         photogenics: (r?['photogenics'] as num?)?.toInt() ?? 0,
+        richs: (r?['richs'] as num?)?.toInt() ?? 0,
+        dates: (r?['dates'] as num?)?.toInt() ?? 0,
       );
 }

@@ -13,7 +13,7 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 void _phone(WidgetTester tester) {
-  tester.view.physicalSize = const Size(1170, 3200);
+  tester.view.physicalSize = const Size(1170, 4200);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
 }

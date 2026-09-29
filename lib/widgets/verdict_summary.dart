@@ -68,7 +68,7 @@ class VerdictSummary extends StatelessWidget {
               ),
           ],
         ),
-        if (stats.igs > 0 || stats.photogenics > 0) ...[
+        if (stats.hasTags) ...[
           const SizedBox(height: 12),
           Wrap(
             spacing: 16,

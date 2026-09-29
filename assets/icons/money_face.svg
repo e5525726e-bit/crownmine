@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 🤑 見錢眼開的臉：老子有錢不差錢 -->
+  <circle cx="32" cy="32" r="28" fill="#FFD54F" stroke="#C79A00" stroke-width="3"/>
+  <!-- 左眼 $ -->
+  <g fill="none" stroke="#2E7D32" stroke-width="3" stroke-linecap="round">
+    <path d="M24 18.5 C24 15.5 15 15.5 15 19.5 C15 23.5 24 22.5 24 26.5 C24 30.5 15 30.5 15 27.5"/>
+    <path d="M19.5 14 L19.5 32"/>
+    <path d="M49 18.5 C49 15.5 40 15.5 40 19.5 C40 23.5 49 22.5 49 26.5 C49 30.5 40 30.5 40 27.5"/>
+    <path d="M44.5 14 L44.5 32"/>
+  </g>
+  <!-- 嘴 -->
+  <path d="M17 38 C22 52 42 52 47 38 Z" fill="#5D3A05" stroke="#8D5A10" stroke-width="2" stroke-linejoin="round"/>
+  <!-- 鈔票舌頭 -->
+  <path d="M26 46 L38 46 L37 58 L27 58 Z" fill="#43A047" stroke="#1B5E20" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="32" cy="52" r="3" fill="none" stroke="#C8E6C9" stroke-width="1.5"/>
+</svg>

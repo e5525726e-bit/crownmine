@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// App 內唯一的評價方式：不是星等，只有四種核心判斷。
 /// 皇冠、綠燈（紅綠燈亮綠燈）、地雷、大便。順序即畫面顯示順序（由好到壞）。
-/// 「IG 網紅店」「網美店」是附加標籤，見 [ReviewTag]。
+/// 「IG 網紅店」「網美店」「老子有錢不差錢」「適合約會」是附加標籤，見 [ReviewTag]。
 enum Verdict {
   crown('crown', '真心推薦', '值得專程來吃', 'assets/icons/crown.svg', Color(0xFFB07E00)),
   green('green', '普通中規中矩', '不好不壞，價格合理', 'assets/icons/green_light.svg',
@@ -31,7 +31,9 @@ enum Verdict {
 /// 附加標籤：描述店的屬性，可以疊在任何核心判斷上。
 enum ReviewTag {
   ig('ig', 'IG 網紅店', '社群上很紅的店'),
-  photogenic('photogenic', '網美店', '拍照好看，重點不在吃');
+  photogenic('photogenic', '網美店', '拍照好看，重點不在吃'),
+  rich('rich', '老子有錢不差錢', '貴，但有錢就是任性'),
+  date('date', '適合約會', '氣氛好，帶另一半來剛好');
 
   const ReviewTag(this.dbValue, this.label, this.hint);
 
@@ -42,11 +44,15 @@ enum ReviewTag {
   String get asset => switch (this) {
         ReviewTag.ig => 'assets/icons/ig.svg',
         ReviewTag.photogenic => 'assets/icons/camera.svg',
+        ReviewTag.rich => 'assets/icons/money.svg',
+        ReviewTag.date => 'assets/icons/cheers.svg',
       };
 
   Color get color => switch (this) {
         ReviewTag.ig => const Color(0xFF7B1FA2),
         ReviewTag.photogenic => const Color(0xFFC2185B),
+        ReviewTag.rich => const Color(0xFFB8860B),
+        ReviewTag.date => const Color(0xFF8E1B3D),
       };
 
   static ReviewTag? fromDb(String value) {

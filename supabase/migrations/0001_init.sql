@@ -64,7 +64,7 @@ create table public.reviews (
   price_paid   integer check (price_paid is null or price_paid between 0 and 100000),
   visited_on   date,
   receipt_path text,                       -- 消費證明（私有 bucket）
-  tags         text[] not null default '{}' check (tags <@ array['ig', 'photogenic']),  -- 附加標籤：IG 網紅店、網美店
+  tags         text[] not null default '{}' check (tags <@ array['ig', 'photogenic', 'rich', 'date']),  -- 附加標籤：IG 網紅店、網美店、老子有錢不差錢、適合約會
   status       text not null default 'visible' check (status in ('visible', 'hidden', 'removed')),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now(),
@@ -141,7 +141,9 @@ select
   count(*) filter (where verdict = 'mine')  as mines,
   count(*) filter (where verdict = 'poop')  as poops,
   count(*) filter (where 'ig' = any(tags))         as igs,
-  count(*) filter (where 'photogenic' = any(tags)) as photogenics
+  count(*) filter (where 'photogenic' = any(tags)) as photogenics,
+  count(*) filter (where 'rich' = any(tags))       as richs,
+  count(*) filter (where 'date' = any(tags))       as dates
 from public.reviews
 where status = 'visible'
 group by place_id;
@@ -150,10 +152,10 @@ group by place_id;
 create or replace function public.search_reviewed_places(q text)
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where q = '' or p.name ilike '%' || q || '%' or p.address ilike '%' || q || '%'
@@ -168,10 +170,10 @@ create or replace function public.places_in_bounds(
 )
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where p.lat between min_lat and max_lat
