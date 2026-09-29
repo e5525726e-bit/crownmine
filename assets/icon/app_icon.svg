@@ -38,7 +38,7 @@
   <circle cx="790" cy="690" r="9" fill="#7CFFB0" opacity="0.4"/>
 
   <!-- 披薩（尖端朝下的三角形，餅皮在上） -->
-  <g transform="translate(512,512) rotate(45) scale(0.85)">
+  <g transform="translate(512,512) rotate(45)">
     <!-- 陰影 -->
     <path d="M-190 -170 Q0 -235 190 -170 L14 230 Q0 250 -14 230 Z" fill="#000" opacity="0.35" transform="translate(0,18)"/>
     <!-- 餅皮外弧 -->
