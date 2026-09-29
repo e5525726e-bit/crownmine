@@ -84,6 +84,16 @@ test/                                模型測試與畫面 smoke test
 > `dart_defines.json` 內的三把金鑰都是會包進 App 的用戶端金鑰，放在私人 repo 可接受；
 > 若 repo 改為公開或要上架，請先到 Google Cloud 為金鑰設定 Android 應用程式限制。
 
+## iPhone 試用：網頁版
+
+沒有 Mac 也沒有 Apple 開發者帳號時，iPhone 可以先用網頁版試用（功能與 App 相同）：
+
+1. Actions → **網頁版部署到 Supabase** → Run workflow，貼上 Supabase 權杖。
+2. 完成後 iPhone Safari 打開 `https://<專案ref>.supabase.co/storage/v1/object/public/web/index.html`。
+3. 分享 → **加入主畫面**，之後從主畫面開就像 App。
+
+正式 iOS App 需要 Apple Developer Program（每年 99 美元），之後可由 GitHub 的 macOS 主機自動建置並透過 TestFlight 安裝，不需要 Mac。
+
 ## 不裝 Flutter 也能試用（Android）
 
 每次推到 `main`，GitHub Actions 會自動建置 Android 安裝檔並放在

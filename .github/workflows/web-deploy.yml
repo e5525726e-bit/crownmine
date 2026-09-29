@@ -1,0 +1,113 @@
+name: 網頁版部署到 Supabase
+
+# 建置 Flutter 網頁版，上傳到 Supabase Storage 的公開 bucket「web」當靜態網站。
+# iPhone 用 Safari 打開就能試用，還能「加入主畫面」。
+# 需要 Supabase Personal Access Token（只在這次執行中使用，不儲存）。
+
+on:
+  workflow_dispatch:
+    inputs:
+      supabase_access_token:
+        description: 'Supabase Personal Access Token（sbp_ 開頭）'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 遮蔽敏感值
+        run: echo "::add-mask::${{ inputs.supabase_access_token }}"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 讀取設定
+        id: cfg
+        run: |
+          url=$(jq -r .SUPABASE_URL dart_defines.json)
+          ref=$(echo "$url" | sed -E 's#https://([^.]+)\.supabase\.co#\1#')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "MAPS_KEY=$(jq -r .GOOGLE_PLACES_API_KEY dart_defines.json)" >> "$GITHUB_ENV"
+
+      - name: 建置網頁版
+        run: |
+          flutter pub get
+          flutter build web --release \
+            --dart-define-from-file=dart_defines.json \
+            --base-href "/storage/v1/object/public/web/" \
+            --pwa-strategy=none
+          sed -i "s#__MAPS_API_KEY__#${MAPS_KEY}#" build/web/index.html
+          rm -f build/web/.last_build_id
+          du -sh build/web
+
+      - name: 上傳到 Supabase Storage
+        env:
+          TOKEN: ${{ inputs.supabase_access_token }}
+          URL: ${{ steps.cfg.outputs.url }}
+          REF: ${{ steps.cfg.outputs.ref }}
+        run: |
+          set -euo pipefail
+          echo "==> 取得 service_role 金鑰"
+          keys=$(curl -sS -H "Authorization: Bearer $TOKEN" "https://api.supabase.com/v1/projects/$REF/api-keys?reveal=true")
+          SR=$(echo "$keys" | jq -r '(.[] | select(.name=="service_role") | .api_key) // empty' | head -1)
+          [ -n "$SR" ] || SR=$(echo "$keys" | jq -r '(.[] | select(.type=="secret") | .api_key) // empty' | head -1)
+          [ -n "$SR" ] || { echo "::error::拿不到 service_role 金鑰"; exit 1; }
+          echo "::add-mask::$SR"
+
+          echo "==> 建立公開 bucket web（已存在則略過）"
+          curl -sS -X POST "$URL/storage/v1/bucket" \
+            -H "Authorization: Bearer $SR" -H "apikey: $SR" -H "Content-Type: application/json" \
+            -d '{"id":"web","name":"web","public":true}' | jq -c . || true
+
+          mime_of() {
+            case "$1" in
+              *.html) echo text/html ;;
+              *.js|*.mjs) echo text/javascript ;;
+              *.wasm) echo application/wasm ;;
+              *.json) echo application/json ;;
+              *.svg) echo image/svg+xml ;;
+              *.png) echo image/png ;;
+              *.otf) echo font/otf ;;
+              *.ttf) echo font/ttf ;;
+              *.symbols|*.frag|NOTICES) echo text/plain ;;
+              *.bin) echo application/octet-stream ;;
+              *) echo application/octet-stream ;;
+            esac
+          }
+
+          echo "==> 上傳檔案"
+          cd build/web
+          n=0
+          while IFS= read -r -d '' f; do
+            path="${f#./}"
+            mime=$(mime_of "$path")
+            code=$(curl -sS -o /tmp/up.json -w "%{http_code}" -X POST "$URL/storage/v1/object/web/$path" \
+              -H "Authorization: Bearer $SR" -H "apikey: $SR" \
+              -H "Content-Type: $mime" -H "x-upsert: true" -H "cache-control: max-age=60" \
+              --data-binary "@$f")
+            if [ "$code" != "200" ]; then echo "::error::上傳失敗 $path ($code): $(cat /tmp/up.json)"; exit 1; fi
+            n=$((n+1))
+          done < <(find . -type f -print0)
+          echo "  上傳 $n 個檔案"
+
+          echo "==> 驗證"
+          curl -sS -D - -o /dev/null "$URL/storage/v1/object/public/web/index.html" | grep -i "HTTP/\|content-type\|content-disposition" || true
+
+      - name: 摘要
+        run: |
+          {
+            echo "## 網頁版已部署"
+            echo ""
+            echo "iPhone Safari 打開：${{ steps.cfg.outputs.url }}/storage/v1/object/public/web/index.html"
+            echo ""
+            echo "開啟後按分享 → 加入主畫面，就會像 App 一樣。"
+          } >> "$GITHUB_STEP_SUMMARY"
