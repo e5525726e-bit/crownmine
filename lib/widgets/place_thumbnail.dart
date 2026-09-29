@@ -25,6 +25,8 @@ class PlaceThumbnail extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Image.network(
+        // 網頁版：圖片主機（Google）不給跨網域讀取時，改用瀏覽器原生 <img> 顯示
+        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
         placesService.photoUrl(place.photos.first, maxWidth: 240),
         width: size,
         height: size,

@@ -154,8 +154,14 @@ class ReviewCard extends StatelessWidget {
                     separatorBuilder: (_, __) => const SizedBox(width: 6),
                     itemBuilder: (_, i) => ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.network(r.photoUrls[i],
-                          width: 96, height: 96, fit: BoxFit.cover),
+                      child: Image.network(
+                          // 網頁版：圖片主機（Google）不給跨網域讀取時，改用瀏覽器原生 <img> 顯示
+                          webHtmlElementStrategy:
+                              WebHtmlElementStrategy.fallback,
+                          r.photoUrls[i],
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.cover),
                     ),
                   ),
                 ),

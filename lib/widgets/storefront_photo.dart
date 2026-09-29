@@ -35,12 +35,14 @@ class StorefrontPhoto extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     Image.network(
+                      // 網頁版：圖片主機（Google）不給跨網域讀取時，改用瀏覽器原生 <img> 顯示
+                      webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                       placesService.photoUrl(p, maxWidth: 1200),
                       fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) =>
-                          progress == null
-                              ? child
-                              : Container(color: scheme.surfaceContainerHighest),
+                      loadingBuilder: (context, child, progress) => progress ==
+                              null
+                          ? child
+                          : Container(color: scheme.surfaceContainerHighest),
                       errorBuilder: (_, __, ___) => Container(
                         color: scheme.surfaceContainerHighest,
                         child: Icon(Icons.storefront_outlined,
