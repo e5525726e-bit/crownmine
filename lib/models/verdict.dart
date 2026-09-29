@@ -44,14 +44,14 @@ enum ReviewTag {
   String get asset => switch (this) {
         ReviewTag.ig => 'assets/icons/ig.svg',
         ReviewTag.photogenic => 'assets/icons/camera.svg',
-        ReviewTag.rich => 'assets/icons/money.svg',
+        ReviewTag.rich => 'assets/icons/money_face.svg',
         ReviewTag.date => 'assets/icons/cheers.svg',
       };
 
   Color get color => switch (this) {
         ReviewTag.ig => const Color(0xFF7B1FA2),
         ReviewTag.photogenic => const Color(0xFFC2185B),
-        ReviewTag.rich => const Color(0xFFB8860B),
+        ReviewTag.rich => const Color(0xFFC79A00),
         ReviewTag.date => const Color(0xFF8E1B3D),
       };
 
