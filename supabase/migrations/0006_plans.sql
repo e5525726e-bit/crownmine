@@ -1,4 +1,4 @@
--- 方案：free / pro。付費身分之後由內購服務（例如 RevenueCat webhook）寫入。
+-- 方案：free / pro。pro = 付費免廣告（額度也放寬）。付費身分之後由內購服務（例如 RevenueCat webhook）寫入。
 alter table public.profiles
   add column if not exists plan text not null default 'free' check (plan in ('free', 'pro')),
   add column if not exists plan_until timestamptz;

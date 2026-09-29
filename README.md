@@ -63,64 +63,18 @@ Flutter（iOS + Android + Web 同一份程式碼）
 
 ### 方案與每日上限（後端 `LIMITS`）
 
+正常使用完全免費；上限只用來防止濫用（例如程式亂刷），一般人一天用不到。
+付費方案（pro）的好處是**免廣告**，額度也順便放寬。
+
 | 功能 | 免費 | 付費（pro） |
 |---|---|---|
-| 搜尋店家、店家頁 | 100 | 1,000 |
-| 附近餐廳、地圖全餐飲店（需登入） | 10 | 500 |
-| 店家照片 | 60 | 1,000 |
+| 搜尋店家、店家頁 | 300 | 1,000 |
+| 附近餐廳、地圖全餐飲店 | 300 | 1,000 |
+| 店家照片 | 500 | 2,000 |
 | 寫評價、看評價、地圖上有評價的店 | 不限 | 不限 |
 
-付費身分存在 `profiles.plan` / `plan_until`，之後由內購服務（如 RevenueCat webhook）寫入。
-
-```
-lib/
-  main.dart / app.dart        進入點與主題
-  config/env.dart             讀取 --dart-define 設定
-  models/                     Place、Review、Verdict（四種標記）
-  services/places_service.dart  Google Places 封裝（FieldMask 排除評價、只留餐飲）
-  data/review_repository.dart   Supabase 存取（評價、檢舉、封鎖、帳號）
-  features/
-    home/       底部導覽（搜尋／附近／我的）、未設定畫面
-    search/     找店家（Google）＋找評價（App 內）
-    map/        評價地圖（標記圖示產生、地圖畫面）
-    nearby/     附近餐廳
-    place/      店家頁
-    review/     寫評價、評價卡片、檢舉對話框
-    auth/       登入／註冊
-    profile/    我的、我的評價、使用條款
-  theme/        Apple 風格主題與彈簧動畫參數
-  widgets/      標記圖示、統計列、分組列表、毛玻璃導覽列、按壓回饋、Google 來源標示等
-  ../preview/   產生預覽圖的工具（不進 git）
-supabase/migrations/0001_init.sql   資料庫結構、權限規則、Storage bucket
-tool/sync_keys.dart                  把金鑰同步到 Android／iOS 原生設定
-test/                                模型測試與畫面 smoke test
-```
-
-## 一鍵建立 Supabase（不用碰 Supabase 網頁）
-
-1. 在 <https://supabase.com/dashboard> 用 GitHub 登入一次（會自動建立預設組織）。
-2. 到 <https://supabase.com/dashboard/account/tokens> 按 **Generate new token**，名稱隨意，複製 `sbp_` 開頭的權杖。
-3. 到 repo 的 **Actions → Supabase 一鍵建置 → Run workflow**，貼上權杖與 Google 金鑰，按 Run。
-4. 約 5 分鐘後專案建好、資料庫初始化完成、設定寫進 `dart_defines.json`，並自動重新建置 APK。
-5. 完成後可到 Supabase 帳號設定撤銷該權杖。
-
-> `dart_defines.json` 內的三把金鑰都是會包進 App 的用戶端金鑰，放在私人 repo 可接受；
-> 若 repo 改為公開或要上架，請先到 Google Cloud 為金鑰設定 Android 應用程式限制。
-
-## iPhone 試用：網頁版（GitHub Pages）
-
-沒有 Mac 也沒有 Apple 開發者帳號時，iPhone 可以先用網頁版試用（功能與 App 相同）：
-
-1. repo 必須是**公開**的（免費方案的 GitHub Pages 限制），到 Settings → Danger Zone → Change visibility 改為 Public。
-2. 每次推到 `main` 會自動部署到 <https://e5525726e-bit.github.io/crownmine/>。
-3. iPhone Safari 打開後，分享 → **加入主畫面**，之後從主畫面開就像 App。
-
-> 網頁版的金鑰本來就會被瀏覽器看到，正式上線前請到 Google Cloud 為金鑰設定
-> 「HTTP 參照網址」限制（`https://e5525726e-bit.github.io/*`）；Android 用另一把金鑰做應用程式限制。
->
-> Supabase Storage 與 Edge Function 都不允許在 supabase.co 網域輸出 HTML，所以無法拿來當網站。
-
-正式 iOS App 需要 Apple Developer Program（每年 99 美元），之後可由 GitHub 的 macOS 主機自動建置並透過 TestFlight 安裝，不需要 Mac。
+快取命中不計次。付費身分存在 `profiles.plan` / `plan_until`，之後由內購服務（如 RevenueCat webhook）寫入；
+廣告預計用 AdMob（手機）／AdSense（網頁），`plan = 'pro'` 時不顯示。
 
 ## 不裝 Flutter 也能試用（Android）
 
