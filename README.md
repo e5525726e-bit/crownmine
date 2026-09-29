@@ -61,6 +61,17 @@ Flutter（iOS + Android + Web 同一份程式碼）
 
 第一次或更新後端函式：Actions → **Supabase 部署後端函式** → Run workflow，貼上 Supabase 權杖。
 
+### 方案與每日上限（後端 `LIMITS`）
+
+| 功能 | 免費 | 付費（pro） |
+|---|---|---|
+| 搜尋店家、店家頁 | 100 | 1,000 |
+| 附近餐廳、地圖全餐飲店（需登入） | 10 | 500 |
+| 店家照片 | 60 | 1,000 |
+| 寫評價、看評價、地圖上有評價的店 | 不限 | 不限 |
+
+付費身分存在 `profiles.plan` / `plan_until`，之後由內購服務（如 RevenueCat webhook）寫入。
+
 ```
 lib/
   main.dart / app.dart        進入點與主題

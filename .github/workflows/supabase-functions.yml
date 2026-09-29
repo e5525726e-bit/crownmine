@@ -27,13 +27,15 @@ jobs:
           ref=$(jq -r .SUPABASE_URL dart_defines.json | sed -E 's#https://([^.]+)\.supabase\.co#\1#')
           key=$(jq -r .GOOGLE_PLACES_API_KEY dart_defines.json)
           echo "::add-mask::$key"
-          echo "==> 執行 migration 0005"
-          result=$(curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
-            -X POST "https://api.supabase.com/v1/projects/$ref/database/query" \
-            -d "$(jq -n --rawfile q supabase/migrations/0005_places_proxy.sql '{query:$q}')")
-          if echo "$result" | jq -e 'type=="object" and .message' >/dev/null 2>&1; then
-            echo "::error::SQL 失敗：$(echo "$result" | jq -r .message)"; exit 1
-          fi
+          for f in 0005_places_proxy.sql 0006_plans.sql; do
+            echo "==> 執行 migration $f"
+            result=$(curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+              -X POST "https://api.supabase.com/v1/projects/$ref/database/query" \
+              -d "$(jq -n --rawfile q "supabase/migrations/$f" '{query:$q}')")
+            if echo "$result" | jq -e 'type=="object" and .message' >/dev/null 2>&1; then
+              echo "::error::SQL 失敗：$(echo "$result" | jq -r .message)"; exit 1
+            fi
+          done
           echo "==> 設定函式 secret"
           npx --yes supabase@latest secrets set --project-ref "$ref" GOOGLE_PLACES_API_KEY="$key"
           echo "==> 部署函式 places"

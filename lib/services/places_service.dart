@@ -88,7 +88,7 @@ class PlacesService {
       final j = jsonDecode(res.body) as Map<String, dynamic>;
       detail = ((j['error'] as Map<String, dynamic>?)?['message'] as String?) ?? detail;
     } catch (_) {}
-    if (res.statusCode == 429) throw PlacesException(detail);
+    if (res.statusCode == 429 || res.statusCode == 401) throw PlacesException(detail);
     throw PlacesException('店家資料讀取失敗 (${res.statusCode})：$detail');
   }
 }
