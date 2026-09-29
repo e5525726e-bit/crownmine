@@ -1,8 +1,8 @@
 // Google Places API (New) 代理
 // - 金鑰只存在伺服器（GOOGLE_PLACES_API_KEY secret），前端不再持有
 // - 結果快取：搜尋 7 天、店家詳細資料與照片 30 天（Google 允許最多 30 天）
-// - 每日用量限制：基本搜尋免費且額度寬鬆；附近／地圖全餐飲店、照片是進階功能，
-//   免費方案額度較小；付費方案（pro）免廣告且額度大
+// - 每日用量限制只為防止濫用（程式亂刷），正常使用不會碰到；
+//   付費方案（pro）之後用於免廣告等好處，額度也放寬
 // 路徑：
 //   POST /places/search   {query, lat?, lng?}
 //   POST /places/nearby   {lat, lng, radius}
@@ -15,18 +15,18 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-// 每日上限 [免費, 付費]；未登入只能用 search／details（以 IP 計，額度同免費）
+// 每日上限 [免費, 付費]，防濫用用；未登入以 IP 計，額度同免費
 const LIMITS: Record<string, [number, number]> = {
-  search: [100, 1000],
-  details: [100, 1000],
-  nearby: [20, 500],
-  photo: [60, 1000],
+  search: [300, 1000],
+  details: [300, 1000],
+  nearby: [100, 1000],
+  photo: [300, 2000],
 };
-const LOGIN_REQUIRED = new Set(["nearby"]);
+const LOGIN_REQUIRED = new Set<string>();
 const UPGRADE_HINT: Record<string, string> = {
   search: "今日搜尋次數已達上限，明天再試",
   details: "今日查詢次數已達上限，明天再試",
-  nearby: "免費方案每天可查看附近餐飲店 20 次，升級後可無限使用",
+  nearby: "今日查看附近餐飲店的次數已達上限，明天再試",
   photo: "今日照片瀏覽次數已達上限，明天再試",
 };
 const TTL_SEARCH_MS = 7 * 24 * 3600 * 1000;
@@ -202,17 +202,11 @@ Deno.serve(async (req) => {
     return fail("not found", 404);
   }
 
-  // 附近／地圖全餐飲店是進階功能：不論有無快取都計次；其他功能快取命中不計次
-  if (feature === "nearby") {
-    const blocked = await gate(req, feature);
-    if (blocked) return blocked;
-  }
+  // 快取命中不計次（不花錢）；只有真的要問 Google 時才計次
   const cached = await cacheGet(key, ttl);
   if (cached) return json(cached, 200, { "X-Cache": "HIT" });
-  if (feature !== "nearby") {
-    const blocked = await gate(req, feature);
-    if (blocked) return blocked;
-  }
+  const blocked = await gate(req, feature);
+  if (blocked) return blocked;
 
   const result = await run();
   if (!result.ok) return json(result.body, result.status);
