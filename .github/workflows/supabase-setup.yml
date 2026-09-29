@@ -1,20 +1,17 @@
 name: Supabase 一鍵建置
 
-# 只需執行一次。從 Actions 頁面手動觸發，填入 Supabase 個人存取權杖（Personal Access Token）。
+# 只需執行一次。從 Actions 頁面手動觸發。Supabase 權杖來自 repo 的 Secret「SUPABASE_ACCESS_TOKEN」。
 # 這支腳本會：
 #   1. 在你的 Supabase 帳號建立專案 crownmine（Tokyo）
 #   2. 等專案啟動後執行 supabase/migrations/0001_init.sql
 #   3. 關閉「Email 確認」讓測試期間註冊後直接登入
 #   4. 取得 Project URL 與 anon/publishable key，寫進 dart_defines.json 並提交到 main
 #   5. 觸發 Android APK 建置
-# 權杖只在這次執行中使用，不會被儲存；執行完可到 Supabase 帳號設定把它撤銷。
+
 
 on:
   workflow_dispatch:
     inputs:
-      supabase_access_token:
-        description: 'Supabase Personal Access Token（sbp_ 開頭）'
-        required: true
       google_places_api_key:
         description: 'Google Places / Maps API 金鑰（AIza 開頭）'
         required: true
@@ -36,13 +33,12 @@ jobs:
 
       - name: 遮蔽敏感值
         run: |
-          echo "::add-mask::${{ inputs.supabase_access_token }}"
           echo "::add-mask::${{ inputs.google_places_api_key }}"
 
       - name: 建立 Supabase 專案並初始化
         id: supa
         env:
-          TOKEN: ${{ inputs.supabase_access_token }}
+          TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
           api() { curl -sS -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" "$@"; }

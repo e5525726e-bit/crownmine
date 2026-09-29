@@ -1,12 +1,10 @@
 name: Supabase 執行 SQL
 
 # 對已建立的 Supabase 專案執行指定的 migration 檔（每個檔案各自一次交易）。
+# 權杖來自 repo 的 Secret「SUPABASE_ACCESS_TOKEN」。
 on:
   workflow_dispatch:
     inputs:
-      supabase_access_token:
-        description: 'Supabase Personal Access Token（sbp_ 開頭）'
-        required: true
       files:
         description: '要執行的 SQL 檔，逗號分隔（相對 supabase/migrations/）'
         required: true
@@ -23,11 +21,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: 執行
         env:
-          TOKEN: ${{ inputs.supabase_access_token }}
+          TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           FILES: ${{ inputs.files }}
         run: |
           set -euo pipefail
-          echo "::add-mask::$TOKEN"
+          if [ -z "$TOKEN" ]; then
+            echo "::error::尚未設定 Secret SUPABASE_ACCESS_TOKEN（repo Settings → Secrets and variables → Actions）"; exit 1
+          fi
           ref=$(jq -r .SUPABASE_URL dart_defines.json | sed -E 's#https://([^.]+)\.supabase\.co#\1#')
           IFS=',' read -ra list <<< "$FILES"
           for f in "${list[@]}"; do

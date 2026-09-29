@@ -62,7 +62,7 @@ Flutter（iOS + Android + Web 同一份程式碼）
                                       （登入 300 次／未登入每 IP 100 次）
 ```
 
-第一次或更新後端函式：Actions → **Supabase 部署後端函式** → Run workflow，貼上 Supabase 權杖。
+第一次或更新後端函式：Actions → **Supabase 部署後端函式** → Run workflow（權杖存在 repo Secret `SUPABASE_ACCESS_TOKEN`，只需設定一次）。
 
 ### 方案與每日上限（後端 `LIMITS`）
 
