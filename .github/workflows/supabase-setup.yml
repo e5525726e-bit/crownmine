@@ -50,9 +50,13 @@ jobs:
           echo "==> 取得組織"
           orgs=$(api https://api.supabase.com/v1/organizations)
           echo "$orgs" | jq -r '.[] | "  - \(.name) (\(.id))"'
-          org_id=$(echo "$orgs" | jq -r '.[0].id')
-          if [ -z "$org_id" ] || [ "$org_id" = "null" ]; then
-            echo "::error::找不到任何 Supabase 組織，請先在 supabase.com 登入一次讓它建立預設組織"; exit 1
+          org_id=$(echo "$orgs" | jq -r '.[0].id // empty')
+          if [ -z "$org_id" ]; then
+            echo "==> 沒有組織，建立一個 crownmine（Free 方案）"
+            created_org=$(api -X POST https://api.supabase.com/v1/organizations -d '{"name":"crownmine"}')
+            echo "$created_org" | jq -c .
+            org_id=$(echo "$created_org" | jq -r '.id // .slug // empty')
+            [ -n "$org_id" ] || { echo "::error::建立組織失敗"; exit 1; }
           fi
 
           echo "==> 檢查是否已有 crownmine 專案"
