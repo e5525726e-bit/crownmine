@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 預設（中文）：美食地圖；英文見 values-en -->
+    <string name="app_name">美食地圖</string>
+</resources>
