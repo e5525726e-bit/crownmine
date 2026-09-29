@@ -1,5 +1,5 @@
 name: crownmine
-description: 只屬於這個 App 的餐廳評價：真心推薦給皇冠，普通又貴給地雷。
+description: 美食地圖：只屬於這個 App 的餐廳評價。
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -24,8 +24,20 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+
+# App 圖示：dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: assets/icon/app_icon.png
+  adaptive_icon_background: "#FF6A1A"
+  adaptive_icon_foreground: assets/icon/app_icon_fg.png
+  web:
+    generate: false
