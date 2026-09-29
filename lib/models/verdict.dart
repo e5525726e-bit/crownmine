@@ -9,7 +9,7 @@ enum Verdict {
   green('green', '普通中規中矩', '不好不壞，價格合理',
       'assets/icons/green_light.svg', Color(0xFF2E7D32)),
   mine('mine', '普通又貴', '味道一般，價格偏高', 'assets/icons/landmine.svg',
-      Color(0xFF37474F)),
+      Color(0xFF212121)),
   poop('poop', '難吃／態度環境很差', '不推薦再來', 'assets/icons/poop.svg',
       Color(0xFF6D4C41));
 
