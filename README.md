@@ -1,8 +1,8 @@
-# 美食地圖 Food Radar
+# 美食地圖 Food Map
 
 > 只屬於這個 App 的餐廳評價。店家資料來自 Google，評價完全獨立，看不到也不會抓取 Google 的評論。
 
-App 名稱：中文「美食地圖」、英文「Food Radar」（Android 依系統語言自動切換；iOS 的 `ios/Runner/*.lproj/InfoPlist.strings` 需在 Xcode 加入 Runner target 後生效；商店頁面名稱另在 App Store Connect／Play Console 各語言填寫）。
+App 名稱：中文「美食地圖」、英文「Food Map」（Android 依系統語言自動切換；iOS 的 `ios/Runner/*.lproj/InfoPlist.strings` 需在 Xcode 加入 Runner target 後生效；商店頁面名稱另在 App Store Connect／Play Console 各語言填寫）。
 
 目前狀態：**開發中，尚未上架**。程式碼可通過 `flutter analyze` 與 `flutter test`，
 需要接上你自己的 Google 與 Supabase 帳號才能在手機上跑起來（步驟見下方）。
