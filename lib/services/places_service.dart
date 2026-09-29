@@ -11,36 +11,79 @@ class PlacesException implements Exception {
   String toString() => message;
 }
 
-/// 店家資料的存取層。
+/// Google Places API (New) 的最小封裝。
 ///
-/// 所有請求都走 Supabase 的後端函式 `places`（見 supabase/functions/places），
-/// Google 金鑰只存在伺服器；後端負責快取（最多 30 天）與每日用量限制。
-/// 回傳格式與 Google Places API (New) 相同，後端也已只留餐飲業，
-/// 前端再用 [isFoodPlace] 過濾一次當保險。
+/// 兩個刻意的限制：
+/// 1. FieldMask 完全不要求 `rating`、`userRatingCount`、`reviews`，
+///    所以 Google 的評價資料從頭到尾不會進到 App。
+/// 2. 搜尋結果一律再用 [isFoodPlace] 過濾，只留下餐飲業。
 class PlacesService {
-  PlacesService({
-    required this.baseUrl,
-    required this.headers,
-    http.Client? client,
-  }) : _client = client ?? http.Client();
+  PlacesService({required this.apiKey, http.Client? client})
+      : _client = client ?? http.Client();
 
-  /// 例：https://xxxx.supabase.co/functions/v1/places
-  final String baseUrl;
-
-  /// 每次請求的標頭（帶 Supabase 的 apikey 與使用者登入權杖，用來計算用量）。
-  final Map<String, String> Function() headers;
+  final String apiKey;
   final http.Client _client;
 
-  Map<String, String> _jsonHeaders() => {
+  static const _base = 'https://places.googleapis.com/v1';
+
+  static const searchFieldMask = 'places.id,places.displayName,'
+      'places.formattedAddress,places.location,places.types,'
+      'places.primaryType,places.primaryTypeDisplayName,places.photos,'
+      'places.businessStatus,places.googleMapsUri,places.priceLevel';
+
+  static const detailFieldMask = 'id,displayName,formattedAddress,location,'
+      'types,primaryType,primaryTypeDisplayName,photos,businessStatus,'
+      'googleMapsUri,priceLevel,regularOpeningHours,nationalPhoneNumber,'
+      'websiteUri';
+
+  /// 台灣本島加離島的大致範圍，沒有定位時用來偏向台灣的結果。
+  static const _taiwanBias = {
+    'rectangle': {
+      'low': {'latitude': 21.8, 'longitude': 118.2},
+      'high': {'latitude': 26.4, 'longitude': 122.1},
+    },
+  };
+
+  /// 沒有位置時只能靠 Nearby Search 的類型清單。
+  static const nearbyTypes = [
+    'restaurant',
+    'cafe',
+    'bakery',
+    'bar',
+    'meal_takeaway',
+    'meal_delivery',
+  ];
+
+  Map<String, String> _headers(String fieldMask) => {
         'Content-Type': 'application/json',
-        ...headers(),
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': fieldMask,
       };
 
-  Future<List<Place>> searchText(String query, {double? lat, double? lng}) async {
+  Future<List<Place>> searchText(
+    String query, {
+    double? lat,
+    double? lng,
+  }) async {
+    final body = <String, dynamic>{
+      'textQuery': query,
+      'includedType': 'restaurant',
+      'regionCode': 'TW',
+      'languageCode': 'zh-TW',
+      'pageSize': 20,
+      'locationBias': (lat != null && lng != null)
+          ? {
+              'circle': {
+                'center': {'latitude': lat, 'longitude': lng},
+                'radius': 5000.0,
+              },
+            }
+          : _taiwanBias,
+    };
     final res = await _client.post(
-      Uri.parse('$baseUrl/search'),
-      headers: _jsonHeaders(),
-      body: jsonEncode({'query': query, if (lat != null) 'lat': lat, if (lng != null) 'lng': lng}),
+      Uri.parse('$_base/places:searchText'),
+      headers: _headers(searchFieldMask),
+      body: jsonEncode(body),
     );
     return _parsePlaces(res);
   }
@@ -50,26 +93,39 @@ class PlacesService {
     required double lng,
     double radiusMeters = 1000,
   }) async {
+    final body = {
+      'includedTypes': nearbyTypes,
+      'maxResultCount': 20,
+      'languageCode': 'zh-TW',
+      'regionCode': 'TW',
+      'rankPreference': 'DISTANCE',
+      'locationRestriction': {
+        'circle': {
+          'center': {'latitude': lat, 'longitude': lng},
+          'radius': radiusMeters,
+        },
+      },
+    };
     final res = await _client.post(
-      Uri.parse('$baseUrl/nearby'),
-      headers: _jsonHeaders(),
-      body: jsonEncode({'lat': lat, 'lng': lng, 'radius': radiusMeters}),
+      Uri.parse('$_base/places:searchNearby'),
+      headers: _headers(searchFieldMask),
+      body: jsonEncode(body),
     );
     return _parsePlaces(res);
   }
 
   Future<Place> getDetails(String placeId) async {
     final res = await _client.get(
-      Uri.parse('$baseUrl/details?id=${Uri.encodeQueryComponent(placeId)}'),
-      headers: headers(),
+      Uri.parse('$_base/places/$placeId?languageCode=zh-TW&regionCode=TW'),
+      headers: _headers(detailFieldMask),
     );
     _throwIfError(res);
     return Place.fromPlacesApi(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
-  /// 店家照片網址：後端會轉址到實際圖片，網址裡沒有任何金鑰。
+  /// 店家照片網址。Google 會回 302 轉到實際圖片，`Image.network` 會自動跟隨。
   String photoUrl(PlacePhoto photo, {int maxWidth = 800}) =>
-      '$baseUrl/photo?name=${Uri.encodeQueryComponent(photo.name)}&w=$maxWidth';
+      '$_base/${photo.name}/media?maxWidthPx=$maxWidth&key=$apiKey';
 
   List<Place> _parsePlaces(http.Response res) {
     _throwIfError(res);
@@ -86,9 +142,9 @@ class PlacesService {
     String detail = res.body;
     try {
       final j = jsonDecode(res.body) as Map<String, dynamic>;
-      detail = ((j['error'] as Map<String, dynamic>?)?['message'] as String?) ?? detail;
+      detail = ((j['error'] as Map<String, dynamic>?)?['message'] as String?) ??
+          detail;
     } catch (_) {}
-    if (res.statusCode == 429) throw PlacesException(detail);
-    throw PlacesException('店家資料讀取失敗 (${res.statusCode})：$detail');
+    throw PlacesException('Google Places 錯誤 (${res.statusCode})：$detail');
   }
 }

@@ -59,7 +59,9 @@ Flutter（iOS + Android + Web 同一份程式碼）
                                       （登入 300 次／未登入每 IP 100 次）
 ```
 
-第一次或更新後端函式：Actions → **Supabase 部署後端函式** → Run workflow，貼上 Supabase 權杖。
+後端代理函式（`supabase/functions/places`）已寫好但**尚未啟用**：前端目前仍直接呼叫 Google。
+要啟用：Actions → **Supabase 部署後端函式** → Run workflow 貼上 Supabase 權杖，
+再把 `lib/di.dart` 與 `lib/services/places_service.dart` 切換到走後端的版本（見 git 歷史）。
 
 ```
 lib/

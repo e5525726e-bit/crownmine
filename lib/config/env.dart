@@ -3,8 +3,6 @@
 class Env {
   Env._();
 
-  /// 只用於地圖底圖（Maps SDK / Maps JavaScript）。店家資料一律經由後端函式，
-  /// 前端不再直接呼叫 Places API。
   static const googlePlacesApiKey =
       String.fromEnvironment('GOOGLE_PLACES_API_KEY');
   static const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
@@ -15,5 +13,7 @@ class Env {
   );
 
   static bool get isConfigured =>
-      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
+      googlePlacesApiKey.isNotEmpty &&
+      supabaseUrl.isNotEmpty &&
+      supabaseAnonKey.isNotEmpty;
 }
