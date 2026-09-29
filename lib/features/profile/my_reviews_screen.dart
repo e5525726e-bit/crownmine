@@ -1,0 +1,61 @@
+import 'package:flutter/material.dart';
+
+import '../../di.dart';
+import '../../models/place.dart';
+import '../../models/review.dart';
+import '../../utils/format.dart';
+import '../../widgets/async_body.dart';
+import '../../widgets/verdict_icon.dart';
+import '../place/place_detail_screen.dart';
+
+class MyReviewsScreen extends StatefulWidget {
+  const MyReviewsScreen({super.key});
+
+  @override
+  State<MyReviewsScreen> createState() => _MyReviewsScreenState();
+}
+
+class _MyReviewsScreenState extends State<MyReviewsScreen> {
+  late Future<List<(Review, Place)>> _future = reviewRepo.myReviews();
+
+  void _reload() => setState(() => _future = reviewRepo.myReviews());
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('我的評價')),
+      body: AsyncBody<List<(Review, Place)>>(
+        future: _future,
+        onRetry: _reload,
+        builder: (context, items) {
+          if (items.isEmpty) {
+            return const Center(child: Text('你還沒有寫過評價'));
+          }
+          return ListView.separated(
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, i) {
+              final (review, place) = items[i];
+              return ListTile(
+                leading: VerdictIcon(review.verdict, size: 32),
+                title: Text(place.name),
+                subtitle: Text(
+                  '${review.verdict.label} · ${fmtRelative(review.createdAt)}\n${review.body}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                isThreeLine: true,
+                onTap: () async {
+                  await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => PlaceDetailScreen(placeId: place.id, initial: place),
+                  ));
+                  _reload();
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
