@@ -1,0 +1,84 @@
+name: Android APK
+
+# 每次推到 main 或手動觸發時，自動建置 Android 安裝檔並附在 GitHub Release 上。
+# 金鑰放在 GitHub → Settings → Secrets and variables → Actions：
+#   GOOGLE_PLACES_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, SUPPORT_EMAIL（選填）
+# 沒設定 secrets 也能建置，只是 App 會顯示「尚未設定 API 金鑰」。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 寫入設定檔
+        env:
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPPORT_EMAIL: ${{ secrets.SUPPORT_EMAIL }}
+        run: |
+          cat > dart_defines.json <<JSON
+          {
+            "GOOGLE_PLACES_API_KEY": "${GOOGLE_PLACES_API_KEY}",
+            "SUPABASE_URL": "${SUPABASE_URL}",
+            "SUPABASE_ANON_KEY": "${SUPABASE_ANON_KEY}",
+            "SUPPORT_EMAIL": "${SUPPORT_EMAIL:-support@example.com}"
+          }
+          JSON
+          echo "MAPS_API_KEY=${GOOGLE_PLACES_API_KEY}" >> android/local.properties
+          if [ -z "$GOOGLE_PLACES_API_KEY" ]; then
+            echo "::warning::尚未設定 secrets，這個 APK 會顯示『尚未設定 API 金鑰』畫面"
+          fi
+
+      - name: 檢查與測試
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - name: 建置 APK
+        run: flutter build apk --release --dart-define-from-file=dart_defines.json
+
+      - name: 重新命名
+        run: cp build/app/outputs/flutter-apk/app-release.apk crownmine-android.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crownmine-android
+          path: crownmine-android.apk
+
+      - name: 發布到 GitHub Release（latest）
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: 最新 Android 安裝檔
+          prerelease: true
+          body: |
+            自動建置自 commit ${{ github.sha }}。
+            手機瀏覽器打開這一頁，下載 `crownmine-android.apk` 後安裝（需允許安裝未知來源應用程式）。
+          files: crownmine-android.apk

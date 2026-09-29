@@ -73,6 +73,17 @@ tool/sync_keys.dart                  把金鑰同步到 Android／iOS 原生設�
 test/                                模型測試與畫面 smoke test
 ```
 
+## 不裝 Flutter 也能試用（Android）
+
+每次推到 `main`，GitHub Actions 會自動建置 Android 安裝檔並放在
+<https://github.com/e5525726e-bit/crownmine/releases/tag/latest>。
+手機瀏覽器打開該頁，下載 `crownmine-android.apk` 安裝即可（需允許安裝未知來源應用程式）。
+
+要讓 APK 真的能連上 Google 與 Supabase，先到 GitHub repo 的
+**Settings → Secrets and variables → Actions → New repository secret** 新增三個 secret：
+`GOOGLE_PLACES_API_KEY`、`SUPABASE_URL`、`SUPABASE_ANON_KEY`（申請方式見下方第 2、3 步），
+然後到 **Actions → Android APK → Run workflow** 重新建置。
+
 ## 從零開始跑起來
 
 ### 1. 安裝 Flutter
