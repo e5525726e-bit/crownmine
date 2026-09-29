@@ -37,6 +37,7 @@ class VerdictSummary extends StatelessWidget {
 
     final text = Theme.of(context).textTheme;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final v in Verdict.values)
           Expanded(
@@ -49,6 +50,8 @@ class VerdictSummary extends StatelessWidget {
                         fontWeight: FontWeight.bold, color: v.color)),
                 Text(v.label,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: text.labelSmall),
               ],
             ),

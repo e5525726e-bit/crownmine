@@ -18,3 +18,6 @@ build/
 .env
 *.env
 dart_defines.json
+
+# 產生預覽圖用的暫存測試與字型
+test/_preview/
