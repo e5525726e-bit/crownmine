@@ -146,16 +146,36 @@ group by place_id;
 -- App 內搜尋評價（q 為空字串時回傳全部，依評價數排序，當作排行榜）
 create or replace function public.search_reviewed_places(q text)
 returns table (
-  place_id text, name text, address text,
+  place_id text, name text, address text, lat double precision, lng double precision,
   crowns bigint, greens bigint, mines bigint, poops bigint
 ) language sql stable set search_path = public as $$
-  select p.place_id, p.name, p.address, s.crowns, s.greens, s.mines, s.poops
+  select p.place_id, p.name, p.address, p.lat, p.lng, s.crowns, s.greens, s.mines, s.poops
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where q = '' or p.name ilike '%' || q || '%' or p.address ilike '%' || q || '%'
   order by (s.crowns + s.greens + s.mines + s.poops) desc, p.name
   limit 50;
 $$;
+
+-- 地圖：回傳某個經緯度範圍內、有評價的店家（最多 200 家，評價多的優先）
+create or replace function public.places_in_bounds(
+  min_lat double precision, min_lng double precision,
+  max_lat double precision, max_lng double precision
+)
+returns table (
+  place_id text, name text, address text, lat double precision, lng double precision,
+  crowns bigint, greens bigint, mines bigint, poops bigint
+) language sql stable set search_path = public as $$
+  select p.place_id, p.name, p.address, p.lat, p.lng, s.crowns, s.greens, s.mines, s.poops
+  from public.places p
+  join public.place_stats s on s.place_id = p.place_id
+  where p.lat between min_lat and max_lat
+    and p.lng between min_lng and max_lng
+  order by (s.crowns + s.greens + s.mines + s.poops) desc
+  limit 200;
+$$;
+
+create index places_lat_lng_idx on public.places (lat, lng);
 
 -- Apple 規定 App 內必須能刪除帳號
 create or replace function public.delete_own_account()

@@ -4,6 +4,7 @@ import 'package:crownmine/models/verdict.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  _dominantTests();
   group('isFoodPlace', () {
     test('接受餐飲類型與 *_restaurant', () {
       expect(isFoodPlace(['restaurant', 'food'], 'restaurant'), isTrue);
@@ -54,5 +55,14 @@ void main() {
     expect(s.count(Verdict.green), 2);
     expect(s.count(Verdict.mine), 1);
     expect(s.count(Verdict.poop), 0);
+  });
+}
+
+void _dominantTests() {
+  test('PlaceStats.dominant 取最多的標記，平手時皇冠優先', () {
+    expect(const PlaceStats().dominant, isNull);
+    expect(const PlaceStats(crowns: 1, poops: 4).dominant, Verdict.poop);
+    expect(const PlaceStats(crowns: 2, mines: 2).dominant, Verdict.crown);
+    expect(const PlaceStats(greens: 3, mines: 1).dominant, Verdict.green);
   });
 }

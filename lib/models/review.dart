@@ -62,18 +62,26 @@ class ReviewedPlace {
     required this.name,
     required this.address,
     required this.stats,
+    this.lat,
+    this.lng,
   });
 
   final String placeId;
   final String name;
   final String address;
   final PlaceStats stats;
+  final double? lat;
+  final double? lng;
+
+  bool get hasLocation => lat != null && lng != null;
 
   factory ReviewedPlace.fromRow(Map<String, dynamic> r) => ReviewedPlace(
         placeId: r['place_id'] as String,
         name: r['name'] as String,
         address: (r['address'] as String?) ?? '',
         stats: PlaceStats.fromRow(r),
+        lat: (r['lat'] as num?)?.toDouble(),
+        lng: (r['lng'] as num?)?.toDouble(),
       );
 }
 
@@ -92,6 +100,16 @@ class PlaceStats {
   final int poops;
 
   int get total => crowns + greens + mines + poops;
+
+  /// 最多人給的標記；平手時依 [Verdict.values] 的順序（皇冠優先）。
+  Verdict? get dominant {
+    if (total == 0) return null;
+    var best = Verdict.values.first;
+    for (final v in Verdict.values) {
+      if (count(v) > count(best)) best = v;
+    }
+    return best;
+  }
 
   int count(Verdict v) => switch (v) {
         Verdict.crown => crowns,

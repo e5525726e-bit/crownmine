@@ -96,6 +96,25 @@ class ReviewRepository {
         .toList();
   }
 
+  /// 地圖可視範圍內有評價的店家。
+  Future<List<ReviewedPlace>> placesInBounds({
+    required double minLat,
+    required double minLng,
+    required double maxLat,
+    required double maxLng,
+  }) async {
+    final rows = await _db.rpc('places_in_bounds', params: {
+      'min_lat': minLat,
+      'min_lng': minLng,
+      'max_lat': maxLat,
+      'max_lng': maxLng,
+    });
+    return (rows as List)
+        .map((r) => ReviewedPlace.fromRow(r as Map<String, dynamic>))
+        .where((p) => p.hasLocation)
+        .toList();
+  }
+
   // --------------------------------------------------------------- reviews
 
   static const _reviewSelect = 'id, place_id, user_id, verdict, body, '

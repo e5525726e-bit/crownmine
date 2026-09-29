@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../map/map_screen.dart';
 import '../nearby/nearby_screen.dart';
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
@@ -14,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
-  static const _pages = [SearchScreen(), NearbyScreen(), ProfileScreen()];
+  static const _pages = [SearchScreen(), MapScreen(), NearbyScreen(), ProfileScreen()];
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onDestinationSelected: (i) => setState(() => _index = i),
           destinations: const [
             NavigationDestination(icon: Icon(Icons.search), label: '搜尋'),
+            NavigationDestination(icon: Icon(Icons.map_outlined), label: '地圖'),
             NavigationDestination(icon: Icon(Icons.near_me), label: '附近'),
             NavigationDestination(icon: Icon(Icons.person), label: '我的'),
           ],

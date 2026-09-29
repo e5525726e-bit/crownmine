@@ -20,6 +20,7 @@
 
 - **找店家**：透過 Google Places API (New) 搜尋，只列出餐飲業（餐廳、咖啡廳、烘焙、酒吧、外帶／外送）。
   FieldMask 完全不要求 `rating`、`userRatingCount`、`reviews`，Google 的評價從頭到尾不會進到 App。
+- **評價地圖**：Google 地圖上只顯示這個 App 有評價的店家，標記用最多人給的那種圖案；點標記看統計、進店家頁。
 - **附近餐廳**：用手機定位找 500 公尺／1 公里／2 公里內的餐飲店家。
 - **找評價**：只在這個 App 的評價資料庫裡搜尋，空白搜尋時顯示評價最多的店家排行。
 - **店家頁**：Google 的基本資料（地址、電話、營業時間、照片）＋這個 App 的四種標記統計與評價列表。
@@ -32,6 +33,7 @@
 ```
 Flutter（iOS + Android 同一份程式碼）
  ├─ Google Places API (New)  ← 店家基本資料（唯讀，不含評價）
+ ├─ Google Maps SDK          ← 地圖分頁的底圖
  └─ Supabase                 ← 帳號、評價、照片、檢舉、封鎖（Postgres + Auth + Storage）
 ```
 
@@ -45,6 +47,7 @@ lib/
   features/
     home/       底部導覽（搜尋／附近／我的）、未設定畫面
     search/     找店家（Google）＋找評價（App 內）
+    map/        評價地圖（標記圖示產生、地圖畫面）
     nearby/     附近餐廳
     place/      店家頁
     review/     寫評價、評價卡片、檢舉對話框
@@ -52,6 +55,7 @@ lib/
     profile/    我的、我的評價、使用條款
   widgets/      標記圖示、統計列、Google 來源標示等
 supabase/migrations/0001_init.sql   資料庫結構、權限規則、Storage bucket
+tool/sync_keys.dart                  把金鑰同步到 Android／iOS 原生設定
 test/                                模型測試與畫面 smoke test
 ```
 
@@ -68,9 +72,12 @@ test/                                模型測試與畫面 smoke test
 ### 2. 建立 Google Cloud 專案並開啟 Places API (New)
 
 1. 到 <https://console.cloud.google.com/> 建立專案。
-2. 「API 和服務」→「啟用 API」→ 搜尋 **Places API (New)** → 啟用。
-3. 「憑證」→ 建立 API 金鑰。
-4. 建議限制金鑰：「API 限制」只勾 Places API (New)；「應用程式限制」正式上架前再設定成 Android／iOS 應用程式。
+2. 「API 和服務」→「啟用 API」→ 依序搜尋並啟用這三個：
+   - **Places API (New)**（找店家）
+   - **Maps SDK for Android**（地圖分頁，Android）
+   - **Maps SDK for iOS**（地圖分頁，iPhone）
+3. 「憑證」→ 建立 API 金鑰（一把金鑰三個 API 共用）。
+4. 建議限制金鑰：「API 限制」只勾上面三個；「應用程式限制」正式上架前再設定成 Android／iOS 應用程式。
 5. 需要綁定付款方式。Google 每月有免費額度，個人測試通常用不到錢；正式上線後費用依搜尋次數計算。
 
 ### 3. 建立 Supabase 專案
@@ -89,6 +96,12 @@ cp dart_defines.example.json dart_defines.json
 
 用編輯器打開 `dart_defines.json`，填入上面拿到的三個值（`SUPPORT_EMAIL` 填你的聯絡信箱）。
 這個檔案已在 `.gitignore`，不會被提交。
+
+然後執行一次，把 Google 金鑰同步到地圖 SDK 需要的原生設定檔（也都不會被提交）：
+
+```bash
+dart run tool/sync_keys.dart
+```
 
 ### 5. 在手機上執行
 
