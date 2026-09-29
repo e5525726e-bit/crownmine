@@ -163,7 +163,7 @@ class VerdictMarkerIcons {
   }
 
   /// 畫出大頭針的 PNG（回傳位元組與邏輯尺寸）。獨立出來方便預覽與測試。
-  /// [tags] 依序疊在左上、左下、右下（最多 [maxTagBadges] 個）。
+  /// [tags] 排在針頭左側，由上往下（最多 [maxTagBadges] 個）。
   static Future<(Uint8List, Size)> renderPng(
       Verdict v, MarkerTier tier, int total,
       {List<ReviewTag> tags = const []}) async {
@@ -227,10 +227,14 @@ class VerdictMarkerIcons {
       ..drawPicture(info.picture)
       ..restore();
 
-    // 附加標籤徽章：左上 → 左下 → 右下（右上留給評價數）。
+    // 附加標籤徽章：統一排在針頭左側，由上往下一排（右上留給評價數）。
     // 標籤越多徽章越小，避免蓋住針頭。
-    const slots = [Offset(-0.72, -0.72), Offset(-0.95, 0.35), Offset(0.95, 0.35)];
     final badgeScale = switch (badges.length) { 0 || 1 => 0.5, 2 => 0.42, _ => 0.36 };
+    final slots = switch (badges.length) {
+      0 || 1 => const [Offset(-0.72, -0.72)],
+      2 => const [Offset(-0.85, -0.6), Offset(-0.95, 0.28)],
+      _ => const [Offset(-0.8, -0.78), Offset(-1.0, 0.0), Offset(-0.8, 0.78)],
+    };
     for (var i = 0; i < badges.length; i++) {
       final pic = badges[i];
       final r = outerR * badgeScale;
