@@ -17,10 +17,10 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 // 每日上限 [免費, 付費]，防濫用用；未登入以 IP 計，額度同免費
 const LIMITS: Record<string, [number, number]> = {
-  search: [300, 1000],
-  details: [300, 1000],
-  nearby: [100, 1000],
-  photo: [1000, 5000],
+  search: [800, 3000],
+  details: [500, 2000],
+  nearby: [300, 1000],
+  photo: [1500, 8000],
 };
 const LOGIN_REQUIRED = new Set<string>();
 const UPGRADE_HINT: Record<string, string> = {
