@@ -66,6 +66,9 @@ class _MapScreenState extends State<MapScreen> {
   final _searchFocus = FocusNode();
   TwCity? _city;
   bool _cityAuto = true;
+
+  /// 定位到了但不在台灣：搜尋改成以目前位置為中心，不限縣市。
+  bool _abroad = false;
   List<Place>? _results;
   bool _searching = false;
   String? _searchError;
@@ -161,10 +164,12 @@ class _MapScreenState extends State<MapScreen> {
       }
       if (pos == null) return;
       final c = await _cityFromNearby(pos.lat, pos.lng) ??
-          cityAt(pos.lat, pos.lng) ??
-          nearestCity(pos.lat, pos.lng);
+          cityAt(pos.lat, pos.lng);
       if (!mounted || !_cityAuto) return;
-      setState(() => _city = c);
+      setState(() {
+        _city = c;
+        _abroad = c == null;
+      });
     } catch (_) {}
   }
 
@@ -241,6 +246,8 @@ class _MapScreenState extends State<MapScreen> {
     final city = typed ?? _city;
     var full = _category.queryFor(q);
     if (city != null && !city.mentionedIn(full)) full = '${city.name} $full';
+    // 沒有縣市可限制（在國外、或定位失敗）時，以目前位置為中心找 30 公里內
+    final here = city == null && _cityAuto ? LocationHub.last : null;
     setState(() {
       _searching = true;
       _searchError = null;
@@ -254,6 +261,9 @@ class _MapScreenState extends State<MapScreen> {
         full,
         type: _category.searchType,
         city: city,
+        lat: here?.lat,
+        lng: here?.lng,
+        radiusMeters: here == null ? null : 30000,
       );
       for (final r in await statsFuture) {
         _statsById[r.placeId] = r.stats;
@@ -598,9 +608,11 @@ class _MapScreenState extends State<MapScreen> {
                           child: CupertinoSearchTextField(
                             controller: _searchCtl,
                             focusNode: _searchFocus,
-                            placeholder: _city == null
-                                ? '搜尋店名或種類'
-                                : '搜尋${_city!.name}的店家',
+                            placeholder: _city != null
+                                ? '搜尋${_city!.name}的店家'
+                                : _abroad && _cityAuto
+                                    ? '搜尋附近的店家'
+                                    : '搜尋店名或種類',
                             onSubmitted: _submitSearch,
                             onSuffixTap: _clearSearch,
                             style: theme.textTheme.bodyLarge,
@@ -609,7 +621,10 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                         const SizedBox(width: 8),
                         _CityChip(
-                          label: _city?.name ?? (_cityAuto ? '定位中…' : '全台灣'),
+                          label: _city?.name ??
+                              (_cityAuto
+                                  ? (_abroad ? '目前位置附近' : '定位中…')
+                                  : '全台灣'),
                           auto: _cityAuto,
                           onTap: _pickCity,
                         ),
@@ -751,9 +766,11 @@ class _MapScreenState extends State<MapScreen> {
     if (_results != null) {
       if (_results!.isEmpty) {
         return [
-          hint(_city == null
-              ? '找不到符合的餐飲店家'
-              : '在${_city!.name}找不到符合的店家。點右上角的縣市可以換地區或改成全台灣。')
+          hint(_city != null
+              ? '在${_city!.name}找不到符合的店家。點右上角的縣市可以換地區或改成全台灣。'
+              : _abroad && _cityAuto
+                  ? '目前位置 30 公里內找不到符合的店家。可以在搜尋文字加上城市名稱。'
+                  : '找不到符合的餐飲店家')
         ];
       }
       return [

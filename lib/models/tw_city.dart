@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 /// 台灣 22 個縣市的粗略範圍，用來把搜尋限制在使用者所在的縣市。
 /// 範圍是外接矩形，會互相重疊；判斷所在縣市時取「包含該點且面積最小」的那個。
 class TwCity {
@@ -90,20 +88,6 @@ TwCity? cityInText(String text) {
         best = c;
         bestLen = hit;
       }
-    }
-  }
-  return best;
-}
-
-/// 離座標最近的縣市中心（不在任何範圍內時用）。
-TwCity nearestCity(double lat, double lng) {
-  var best = kTwCities.first;
-  var bestD = double.infinity;
-  for (final c in kTwCities) {
-    final d = math.pow(c.centerLat - lat, 2) + math.pow(c.centerLng - lng, 2);
-    if (d < bestD) {
-      bestD = d.toDouble();
-      best = c;
     }
   }
   return best;
