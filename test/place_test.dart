@@ -38,13 +38,9 @@ void main() {
     expect(place.toString().contains('不該出現'), isFalse);
   });
 
-  test('IG 標籤圖示：負面判斷才有禁止線', () {
-    expect(ReviewTag.ig.assetFor(Verdict.crown), 'assets/icons/ig.svg');
-    expect(ReviewTag.ig.assetFor(Verdict.green), 'assets/icons/ig.svg');
-    expect(ReviewTag.ig.assetFor(Verdict.mine), 'assets/icons/ig_no.svg');
-    expect(ReviewTag.ig.assetFor(Verdict.poop), 'assets/icons/ig_no.svg');
-    expect(ReviewTag.ig.assetFor(null), 'assets/icons/ig.svg');
+  test('標籤對應資料庫值', () {
     expect(ReviewTag.listFromDb(['ig', 'x', 'photogenic']), [ReviewTag.ig, ReviewTag.photogenic]);
+    expect(ReviewTag.ig.asset, 'assets/icons/ig.svg');
   });
 
   test('Verdict 對應資料庫值', () {

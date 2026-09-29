@@ -41,12 +41,8 @@ enum ReviewTag {
   final String label;
   final String hint;
 
-  /// 圖示依核心判斷而定：IG 在負面判斷（地雷、大便）時加紅色禁止斜線，
-  /// 在皇冠、綠燈時是乾淨的 IG 圖案。
-  String assetFor(Verdict? verdict) => switch (this) {
-        ReviewTag.ig => (verdict?.isNegative ?? false)
-            ? 'assets/icons/ig_no.svg'
-            : 'assets/icons/ig.svg',
+  String get asset => switch (this) {
+        ReviewTag.ig => 'assets/icons/ig.svg',
         ReviewTag.photogenic => 'assets/icons/camera.svg',
       };
 

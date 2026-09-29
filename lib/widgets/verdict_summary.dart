@@ -16,7 +16,6 @@ class VerdictSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final dominant = stats.dominant;
 
     if (compact) {
       return Row(
@@ -39,7 +38,7 @@ class VerdictSummary extends StatelessWidget {
             if (stats.isTagged(t))
               Padding(
                 padding: const EdgeInsets.only(left: 8),
-                child: TagIcon(t, verdict: dominant, size: 18),
+                child: TagIcon(t, size: 18),
               ),
         ],
       );
@@ -81,7 +80,7 @@ class VerdictSummary extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TagIcon(t, verdict: dominant, size: 22),
+                      TagIcon(t, size: 22),
                       const SizedBox(width: 6),
                       Text('${stats.tagCount(t)} 人標記為${t.label}',
                           style: text.bodySmall),

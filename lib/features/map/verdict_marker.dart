@@ -69,14 +69,14 @@ class VerdictMarkerIcons {
   }
 
   /// 畫出大頭針的 PNG（回傳位元組與邏輯尺寸）。獨立出來方便預覽與測試。
-  /// [igBadge] 為 true 時在左上角加 IG 徽章；負面判斷用有禁止線的版本。
+  /// [igBadge] 為 true 時在左上角加 IG 徽章。
   static Future<(Uint8List, Size)> renderPng(Verdict v, MarkerTier tier, int total,
       {bool igBadge = false}) async {
     final info = _pictures[v] ??= await vg.loadPicture(SvgAssetLoader(v.asset), null);
     PictureInfo? ig;
     if (igBadge) {
-      final asset = ReviewTag.ig.assetFor(v);
-      ig = _tagPictures[asset] ??= await vg.loadPicture(SvgAssetLoader(asset), null);
+      ig = _tagPictures[ReviewTag.ig.asset] ??=
+          await vg.loadPicture(SvgAssetLoader(ReviewTag.ig.asset), null);
     }
 
     final head = kPinHeadSize * tier.scale; // 針頭直徑

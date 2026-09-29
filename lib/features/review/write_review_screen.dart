@@ -209,7 +209,6 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _TagOption(
                   tag: t,
-                  verdict: _verdict,
                   selected: _tags.contains(t),
                   onTap: () => setState(() {
                     if (!_tags.add(t)) _tags.remove(t);
@@ -394,13 +393,11 @@ class _VerdictOption extends StatelessWidget {
 class _TagOption extends StatelessWidget {
   const _TagOption({
     required this.tag,
-    required this.verdict,
     required this.selected,
     required this.onTap,
   });
 
   final ReviewTag tag;
-  final Verdict? verdict;
   final bool selected;
   final VoidCallback onTap;
 
@@ -422,7 +419,7 @@ class _TagOption extends StatelessWidget {
         ),
         child: Row(
           children: [
-            TagIcon(tag, verdict: verdict, size: 32),
+            TagIcon(tag, size: 32),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

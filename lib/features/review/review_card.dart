@@ -122,7 +122,7 @@ class ReviewCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     for (final t in r.tags)
-                      _Tag(null, t.label, leading: TagIcon(t, verdict: r.verdict, size: 16), color: t.color),
+                      _Tag(null, t.label, leading: TagIcon(t, size: 16), color: t.color),
                     if (r.pricePaid != null) _Tag(CupertinoIcons.money_dollar_circle, '每人約 \$${r.pricePaid}'),
                     if (r.visitedOn != null) _Tag(CupertinoIcons.calendar, '${fmtDate(r.visitedOn!)} 造訪'),
                     if (r.hasReceipt) _Tag(CupertinoIcons.checkmark_seal_fill, '附消費證明', accent: true),
