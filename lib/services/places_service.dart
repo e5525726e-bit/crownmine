@@ -47,9 +47,17 @@ class PlacesService {
     double? radiusMeters,
     String? type,
     TwCity? city,
+    ({double minLat, double minLng, double maxLat, double maxLng})? rect,
+    int pages = 1,
+    bool strict = false,
   }) async {
-    // 關鍵字搜尋（type 為 any，例如手搖飲料）：Google 沒有給這類店餐飲類型，不再過濾
-    final loose = type == 'any';
+    // 關鍵字搜尋（type 為 any，例如手搖飲料）：Google 沒有給這類店餐飲類型，不再過濾；
+    // strict 為 true 時仍只留餐飲業（地圖列範圍內店家用）
+    final loose = type == 'any' && !strict;
+    final b = rect ??
+        (city == null
+            ? null
+            : (minLat: city.minLat, minLng: city.minLng, maxLat: city.maxLat, maxLng: city.maxLng));
     final res = await _client.post(
       Uri.parse('$baseUrl/search'),
       headers: _jsonHeaders(),
@@ -59,13 +67,15 @@ class PlacesService {
         if (lng != null) 'lng': lng,
         if (radiusMeters != null) 'radius': radiusMeters,
         if (type != null) 'type': type,
-        if (city != null)
+        if (b != null)
           'bounds': {
-            'minLat': city.minLat,
-            'minLng': city.minLng,
-            'maxLat': city.maxLat,
-            'maxLng': city.maxLng,
+            'minLat': b.minLat,
+            'minLng': b.minLng,
+            'maxLat': b.maxLat,
+            'maxLng': b.maxLng,
           },
+        if (pages > 1) 'pages': pages,
+        if (strict) 'strict': true,
       }),
     );
     final places = _parsePlaces(res, loose: loose);

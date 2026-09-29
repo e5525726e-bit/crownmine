@@ -34,7 +34,7 @@ const TTL_DETAILS_MS = 30 * 24 * 3600 * 1000;
 
 const SEARCH_MASK = "places.id,places.displayName,places.formattedAddress,places.location,places.types," +
   "places.primaryType,places.primaryTypeDisplayName,places.photos,places.businessStatus," +
-  "places.googleMapsUri,places.priceLevel";
+  "places.googleMapsUri,nextPageToken";  // 不要 priceLevel：那會落到較貴的 Enterprise 計費
 const DETAIL_MASK = "id,displayName,formattedAddress,location,types,primaryType,primaryTypeDisplayName," +
   "photos,businessStatus,googleMapsUri,priceLevel,regularOpeningHours,nationalPhoneNumber,websiteUri";
 
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
   let run: () => Promise<{ ok: boolean; status: number; body: unknown }>;
 
   if (sub === "search" && req.method === "POST") {
-    const { query, lat, lng, radius, type, bounds } = await req.json().catch(() => ({}));
+    const { query, lat, lng, radius, type, bounds, pages, strict } = await req.json().catch(() => ({}));
     const q = String(query ?? "").trim();
     if (!q) return fail("缺少 query");
     const hasPos = typeof lat === "number" && typeof lng === "number";
@@ -191,7 +191,11 @@ Deno.serve(async (req) => {
     // 類型：未指定 → 餐廳；"any" → 不限（靠關鍵字，結果仍會過濾成餐飲）；其他需在白名單內
     const t = typeof type === "string" && type ? type : "restaurant";
     const includedType = t === "any" ? undefined : (FOOD_TYPES.has(t) ? t : "restaurant");
-    key = `search:${q.toLowerCase()}:${near}:${includedType ?? "any"}`;
+    // 一次最多拿幾頁（每頁 20 家、每頁各算一次）；地圖範圍內列店家時用 3 頁 = 60 家
+    const nPages = Math.min(3, Math.max(1, Number(pages ?? 1) || 1));
+    // strict：即使不限類型也只留餐飲業（地圖用）
+    const keepFoodOnly = !!includedType || strict === true;
+    key = `search:${q.toLowerCase()}:${near}:${includedType ?? "any"}:${nPages}:${keepFoodOnly ? "f" : "a"}`;
     feature = "search";
     run = async () => {
       const location = rect
@@ -201,15 +205,26 @@ Deno.serve(async (req) => {
             ? { rectangle: { low: { latitude: 21.8, longitude: 118.2 }, high: { latitude: 26.4, longitude: 122.1 } } }
             : { circle: { center: { latitude: lat, longitude: lng }, radius: r } },
         };
-      const r2 = await google("places:searchText", {
-        method: "POST",
-        body: JSON.stringify({
-          textQuery: q, ...(includedType ? { includedType } : {}), regionCode: "TW", languageCode: "zh-TW", pageSize: 20,
-          ...location,
-        }),
-      }, SEARCH_MASK);
-      // 關鍵字搜尋（不限類型）時不過濾：手搖飲、小吃攤這類店 Google 常沒給餐飲類型
-      return r2.ok && includedType ? { ...r2, body: filterFood(r2.body as { places?: [] }) } : r2;
+      const all: unknown[] = [];
+      let pageToken: string | undefined;
+      let last: { ok: boolean; status: number; body: unknown } = { ok: true, status: 200, body: {} };
+      for (let i = 0; i < nPages; i++) {
+        last = await google("places:searchText", {
+          method: "POST",
+          body: JSON.stringify({
+            textQuery: q, ...(includedType ? { includedType } : {}), regionCode: "TW", languageCode: "zh-TW", pageSize: 20,
+            ...location, ...(pageToken ? { pageToken } : {}),
+          }),
+        }, SEARCH_MASK);
+        if (!last.ok) return last;
+        const body = last.body as { places?: unknown[]; nextPageToken?: string };
+        all.push(...(body.places ?? []));
+        pageToken = body.nextPageToken;
+        if (!pageToken) break;
+      }
+      const merged = { places: all as Array<{ types?: string[]; primaryType?: string }> };
+      // 關鍵字搜尋（不限類型）預設不過濾：手搖飲、小吃攤這類店 Google 常沒給餐飲類型
+      return { ok: true, status: 200, body: keepFoodOnly ? filterFood(merged) : merged };
     };
   } else if (sub === "nearby" && req.method === "POST") {
     const { lat, lng, radius, types } = await req.json().catch(() => ({}));

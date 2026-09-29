@@ -432,27 +432,25 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// 以畫面中心為圓心、涵蓋可視範圍的半徑（最多 1.5 公里）找餐飲店。
+  /// 列出畫面範圍內的餐飲店：用文字搜尋限制在可視矩形內，最多 3 頁（60 家）。
+  /// 比「附近搜尋」（一次只有 20 家、且集中在畫面中心）能列出更多店。
   Future<List<Place>> _nearbyIn(LatLngBounds b) {
-    final lat = (b.southwest.latitude + b.northeast.latitude) / 2;
-    final lng = (b.southwest.longitude + b.northeast.longitude) / 2;
-    final dLat = (b.northeast.latitude - b.southwest.latitude) * 111320 / 2;
-    final dLng = (b.northeast.longitude - b.southwest.longitude) *
-        111320 *
-        math.cos(lat * math.pi / 180) /
-        2;
-    final radius = math.sqrt(dLat * dLat + dLng * dLng).clamp(200.0, 1500.0);
-    if (!_category.isAll && !_category.hasTypes) {
-      return placesService.searchText(
-        _category.keyword,
-        lat: lat,
-        lng: lng,
-        radiusMeters: radius,
-        type: _category.searchType,
-      );
-    }
-    return placesService.searchNearby(
-        lat: lat, lng: lng, radiusMeters: radius, types: _category.types);
+    // 避免快取鍵太碎：範圍四捨五入到約 100 公尺
+    double r3(double v) => (v * 1000).roundToDouble() / 1000;
+    final rect = (
+      minLat: r3(b.southwest.latitude),
+      minLng: r3(b.southwest.longitude),
+      maxLat: r3(b.northeast.latitude),
+      maxLng: r3(b.northeast.longitude),
+    );
+    return placesService.searchText(
+      _category.isAll ? '餐廳' : _category.keyword,
+      rect: rect,
+      type: 'any',
+      pages: 3,
+      // 飲料店 Google 常沒有餐飲類型，其餘種類仍只留餐飲業
+      strict: _category != FoodCategory.drink,
+    );
   }
 
   // ------------------------------------------------------------- 距離
