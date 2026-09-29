@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 燈泡：有特別的點子／創意 -->
+  <path d="M32 6 C20 6 13 15 13 25 C13 33 18 37 21 41 L21 46 L43 46 L43 41 C46 37 51 33 51 25 C51 15 44 6 32 6 Z" fill="#FFEE58" stroke="#F9A825" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M24 30 C24 24 28 22 32 22 C36 22 40 24 40 30" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  <rect x="22" y="47" width="20" height="5" rx="2" fill="#78909C" stroke="#455A64" stroke-width="2"/>
+  <rect x="24" y="53" width="16" height="5" rx="2" fill="#78909C" stroke="#455A64" stroke-width="2"/>
+  <path d="M8 22 L4 20 M56 22 L60 20 M12 10 L9 7 M52 10 L55 7 M32 3 L32 0" stroke="#F9A825" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

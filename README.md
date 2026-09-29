@@ -23,6 +23,7 @@ App 名稱：中文「美食地圖」、英文「Food Map」（Android 依系統
 | IG 網紅店 | 社群上很紅的店 | `assets/icons/ig.svg` |
 | 網美店 | 拍照好看，重點不在吃 | `assets/icons/camera.svg` |
 | 適合約會 | 氣氛好，帶另一半來剛好 | `assets/icons/cheers.svg` |
+| 燈泡 | 獨門特色 | `assets/icons/special.svg` |
 | 大便 | 難吃／態度環境很差 | `assets/icons/poop.svg` |
 
 同一家店可以同時是「真心推薦」和「IG 網紅店」。地圖上大頭針顯示核心判斷，

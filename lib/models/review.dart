@@ -107,6 +107,7 @@ class PlaceStats {
     this.poops = 0,
     this.richs = 0,
     this.fires = 0,
+    this.specials = 0,
     this.igs = 0,
     this.photogenics = 0,
     this.dates = 0,
@@ -119,6 +120,7 @@ class PlaceStats {
   final int poops;
   final int richs;
   final int fires;
+  final int specials;
   final int igs;
   final int photogenics;
   final int dates;
@@ -148,6 +150,7 @@ class PlaceStats {
         ReviewTag.ig => igs,
         ReviewTag.photogenic => photogenics,
         ReviewTag.date => dates,
+        ReviewTag.special => specials,
         ReviewTag.poop => poops,
       };
 
@@ -171,6 +174,7 @@ class PlaceStats {
         photogenics: (r?['photogenics'] as num?)?.toInt() ?? 0,
         richs: (r?['richs'] as num?)?.toInt() ?? 0,
         fires: (r?['fires'] as num?)?.toInt() ?? 0,
+        specials: (r?['specials'] as num?)?.toInt() ?? 0,
         dates: (r?['dates'] as num?)?.toInt() ?? 0,
       );
 }

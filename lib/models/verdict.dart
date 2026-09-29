@@ -36,6 +36,7 @@ enum ReviewTag {
   ig('ig', 'IG 網紅店', '社群上很紅的店'),
   photogenic('photogenic', '網美店', '拍照好看，重點不在吃'),
   date('date', '適合約會', '氣氛好，帶另一半來剛好'),
+  special('special', '獨門特色', '有別的地方吃不到的東西'),
   poop('poop', '難吃／態度環境很差', '不推薦再來');
 
   const ReviewTag(this.dbValue, this.label, this.hint);
@@ -49,6 +50,7 @@ enum ReviewTag {
         ReviewTag.ig => 'assets/icons/ig.svg',
         ReviewTag.photogenic => 'assets/icons/camera.svg',
         ReviewTag.date => 'assets/icons/cheers.svg',
+        ReviewTag.special => 'assets/icons/special.svg',
         ReviewTag.poop => 'assets/icons/poop.svg',
       };
 
@@ -57,6 +59,7 @@ enum ReviewTag {
         ReviewTag.ig => const Color(0xFF7B1FA2),
         ReviewTag.photogenic => const Color(0xFFC2185B),
         ReviewTag.date => const Color(0xFF8E1B3D),
+        ReviewTag.special => const Color(0xFFF57F17),
         ReviewTag.poop => const Color(0xFF6D4C41),
       };
 

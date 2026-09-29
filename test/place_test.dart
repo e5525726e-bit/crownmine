@@ -57,7 +57,7 @@ void main() {
   });
 
   test('PlaceStats 五種計數與標籤', () {
-    final s = PlaceStats.fromRow({'crowns': 3, 'rices': 4, 'greens': 2, 'mines': 1, 'poops': 5, 'igs': 4, 'photogenics': 1, 'richs': 2, 'dates': 0, 'fires': 6});
+    final s = PlaceStats.fromRow({'crowns': 3, 'rices': 4, 'greens': 2, 'mines': 1, 'poops': 5, 'igs': 4, 'photogenics': 1, 'richs': 2, 'dates': 0, 'fires': 6, 'specials': 3});
     expect(s.total, 12);
     expect(s.count(Verdict.rice), 4);
     expect(s.tagCount(ReviewTag.ig), 4);
@@ -71,6 +71,7 @@ void main() {
     expect(s.count(Verdict.mine), 1);
     expect(s.tagCount(ReviewTag.poop), 5);
     expect(s.tagCount(ReviewTag.fire), 6);
+    expect(s.tagCount(ReviewTag.special), 3);
     expect(s.isTagged(ReviewTag.poop), isTrue);
   });
 }
