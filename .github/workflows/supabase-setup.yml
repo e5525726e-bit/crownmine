@@ -40,6 +40,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
+          TOKEN=$(printf '%s' "$TOKEN" | tr -d '[:space:]')
           set -euo pipefail
           api() { curl -sS -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" "$@"; }
 

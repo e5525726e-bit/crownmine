@@ -25,6 +25,7 @@ jobs:
           FILES: ${{ inputs.files }}
         run: |
           set -euo pipefail
+          TOKEN=$(printf '%s' "$TOKEN" | tr -d '[:space:]')
           if [ -z "$TOKEN" ]; then
             echo "::error::尚未設定 Secret SUPABASE_ACCESS_TOKEN（repo Settings → Secrets and variables → Actions）"; exit 1
           fi
