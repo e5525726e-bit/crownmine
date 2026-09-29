@@ -63,7 +63,7 @@ jobs:
           echo "==> 驗證照片"
           photo=$(echo "$res" | jq -r '.places[0].photos[0].name // empty')
           if [ -n "$photo" ]; then
-            for w in 240 400 1200; do
+            for w in 240 800; do
               curl -sS -o /tmp/img -D /tmp/h -w "photo w=$w: HTTP %{http_code} type=%{content_type} bytes=%{size_download} time=%{time_total}s\n" "$url/functions/v1/places/photo?name=$photo&w=$w"
               grep -i "x-cache" /tmp/h || true
               file /tmp/img | cut -c1-80 || true

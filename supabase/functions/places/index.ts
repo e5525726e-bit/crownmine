@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     const name = url.searchParams.get("name") ?? "";
     // 尺寸只分兩級（縮圖／大圖），同一張照片最多只向 Google 要兩次，其餘走快取
     const wantW = Number(url.searchParams.get("w") ?? "800");
-    const w = wantW <= 400 ? 400 : 1200;
+    const w = wantW <= 400 ? 400 : 800;
     if (!name.startsWith("places/")) return fail("bad photo name");
     const key = `photo:${name}:${w}`;
     let uri = (await cacheGet(key, TTL_DETAILS_MS)) as string | null;
