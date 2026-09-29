@@ -62,7 +62,7 @@ create table public.reviews (
   place_id     text not null references public.places (place_id) on delete cascade,
   user_id      uuid not null references public.profiles (id) on delete cascade,
   verdict      public.verdict not null check (verdict <> 'poop'),
-  body         text not null default '' check (char_length(body) <= 2000),   -- 留言選填（負評例外，見下方 constraint）
+  body         text not null default '' check (char_length(btrim(body)) between 5 and 2000),   -- 留言至少 5 字（負評 10 字，見下方 constraint）
   price_paid   integer check (price_paid is null or price_paid between 0 and 100000),
   visited_on   date,
   receipt_path text,                       -- 消費證明（私有 bucket）

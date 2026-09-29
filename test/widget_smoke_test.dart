@@ -76,6 +76,26 @@ void _negativeBodyTests() {
     primaryType: 'restaurant',
   );
 
+  testWidgets('一般評價沒寫 5 字不能送出', (tester) async {
+    _phone(tester);
+    await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Verdict.crown.label));
+    await tester.pumpAndSettle();
+    expect(find.text('說說你的真實體驗（至少 5 字）'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField).first, '好吃');
+    await tester.scrollUntilVisible(
+      find.text('送出評價'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.text('送出評價'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('送出評價'));
+    await tester.pumpAndSettle();
+    expect(find.text('請至少寫 5 個字'), findsOneWidget);
+  });
+
   testWidgets('選地雷沒寫 10 字不能送出', (tester) async {
     _phone(tester);
     await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));

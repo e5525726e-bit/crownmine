@@ -38,7 +38,9 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   XFile? _receipt;
   bool _submitting = false;
 
-  /// 負評（地雷或大便標籤）必須寫至少 10 字說明。
+  /// 留言至少 5 字；負評（地雷或大便標籤）至少 10 字說明。
+  int get _minBody => _bodyRequired ? 10 : 5;
+
   bool get _bodyRequired =>
       _verdict == Verdict.mine || _tags.contains(ReviewTag.poop);
 
@@ -250,7 +252,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 decoration: InputDecoration(
                   labelText: _bodyRequired
                       ? '說說你的真實體驗（負評至少 10 字）'
-                      : '說說你的真實體驗（選填）',
+                      : '說說你的真實體驗（至少 5 字）',
                   hintText: _bodyRequired
                       ? '給地雷或大便請說明原因，讓別人知道發生什麼事'
                       : '吃了什麼、花了多少、服務和環境如何……',
@@ -260,7 +262,11 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 validator: (v) {
                   final n = (v ?? '').trim().length;
                   if (n > 2000) return '最多 2000 字';
-                  if (_bodyRequired && n < 10) return '給地雷或大便時，請至少寫 10 個字說明原因';
+                  if (n < _minBody) {
+                    return _bodyRequired
+                        ? '給地雷或大便時，請至少寫 10 個字說明原因'
+                        : '請至少寫 5 個字';
+                  }
                   return null;
                 },
               ),
