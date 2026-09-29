@@ -84,13 +84,18 @@ test/                                模型測試與畫面 smoke test
 > `dart_defines.json` 內的三把金鑰都是會包進 App 的用戶端金鑰，放在私人 repo 可接受；
 > 若 repo 改為公開或要上架，請先到 Google Cloud 為金鑰設定 Android 應用程式限制。
 
-## iPhone 試用：網頁版
+## iPhone 試用：網頁版（GitHub Pages）
 
 沒有 Mac 也沒有 Apple 開發者帳號時，iPhone 可以先用網頁版試用（功能與 App 相同）：
 
-1. Actions → **網頁版部署到 Supabase** → Run workflow，貼上 Supabase 權杖。
-2. 完成後 iPhone Safari 打開 `https://<專案ref>.supabase.co/functions/v1/web`。
-3. 分享 → **加入主畫面**，之後從主畫面開就像 App。
+1. repo 必須是**公開**的（免費方案的 GitHub Pages 限制），到 Settings → Danger Zone → Change visibility 改為 Public。
+2. 每次推到 `main` 會自動部署到 <https://e5525726e-bit.github.io/crownmine/>。
+3. iPhone Safari 打開後，分享 → **加入主畫面**，之後從主畫面開就像 App。
+
+> 網頁版的金鑰本來就會被瀏覽器看到，正式上線前請到 Google Cloud 為金鑰設定
+> 「HTTP 參照網址」限制（`https://e5525726e-bit.github.io/*`）；Android 用另一把金鑰做應用程式限制。
+>
+> Supabase Storage 與 Edge Function 都不允許在 supabase.co 網域輸出 HTML，所以無法拿來當網站。
 
 正式 iOS App 需要 Apple Developer Program（每年 99 美元），之後可由 GitHub 的 macOS 主機自動建置並透過 TestFlight 安裝，不需要 Mac。
 

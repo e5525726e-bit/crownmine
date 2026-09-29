@@ -1,0 +1,58 @@
+name: 網頁版（GitHub Pages）
+
+# 建置 Flutter 網頁版並發布到 GitHub Pages：
+#   https://e5525726e-bit.github.io/crownmine/
+# 免費方案的 GitHub Pages 只支援公開 repo。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: 建置網頁版
+        run: |
+          KEY=$(jq -r .GOOGLE_PLACES_API_KEY dart_defines.json)
+          flutter pub get
+          flutter build web --release \
+            --dart-define-from-file=dart_defines.json \
+            --base-href "/${{ github.event.repository.name }}/" \
+            --pwa-strategy=none
+          sed -i "s#__MAPS_API_KEY__#${KEY}#" build/web/index.html
+          rm -f build/web/.last_build_id
+          # 讓 Flutter 的路由在重新整理時也能回到首頁
+          cp build/web/index.html build/web/404.html
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
