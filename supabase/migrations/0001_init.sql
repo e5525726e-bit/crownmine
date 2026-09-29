@@ -61,7 +61,7 @@ create table public.reviews (
   place_id     text not null references public.places (place_id) on delete cascade,
   user_id      uuid not null references public.profiles (id) on delete cascade,
   verdict      public.verdict not null check (verdict <> 'poop'),
-  body         text not null default '' check (char_length(body) <= 2000),   -- 留言選填
+  body         text not null default '' check (char_length(body) <= 2000),   -- 留言選填（負評例外，見下方 constraint）
   price_paid   integer check (price_paid is null or price_paid between 0 and 100000),
   visited_on   date,
   receipt_path text,                       -- 消費證明（私有 bucket）
@@ -71,6 +71,10 @@ create table public.reviews (
   updated_at   timestamptz not null default now(),
   unique (place_id, user_id)
 );
+-- 負評（地雷判斷或大便標籤）至少 10 字說明
+alter table public.reviews add constraint reviews_negative_body_check
+  check ((verdict <> 'mine' and not ('poop' = any(tags))) or char_length(btrim(body)) >= 10);
+
 
 create index reviews_place_idx on public.reviews (place_id, status);
 create index reviews_user_idx on public.reviews (user_id);

@@ -8,7 +8,7 @@ on:
       files:
         description: '要執行的 SQL 檔，逗號分隔（相對 supabase/migrations/）'
         required: true
-        default: '0008a_rich_verdict.sql,0008b_rich_stats.sql,0009_poop_fire_tags.sql'
+        default: '0010_negative_body.sql'
 
 permissions:
   contents: read

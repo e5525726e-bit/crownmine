@@ -38,6 +38,10 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   XFile? _receipt;
   bool _submitting = false;
 
+  /// 負評（地雷或大便標籤）必須寫至少 10 字說明。
+  bool get _bodyRequired =>
+      _verdict == Verdict.mine || _tags.contains(ReviewTag.poop);
+
   @override
   void initState() {
     super.initState();
@@ -243,14 +247,22 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 minLines: 4,
                 maxLines: 10,
                 maxLength: 2000,
-                decoration: const InputDecoration(
-                  labelText: '說說你的真實體驗（選填）',
-                  hintText: '吃了什麼、花了多少、服務和環境如何……',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: _bodyRequired
+                      ? '說說你的真實體驗（負評至少 10 字）'
+                      : '說說你的真實體驗（選填）',
+                  hintText: _bodyRequired
+                      ? '給地雷或大便請說明原因，讓別人知道發生什麼事'
+                      : '吃了什麼、花了多少、服務和環境如何……',
+                  border: const OutlineInputBorder(),
                   alignLabelWithHint: true,
                 ),
-                validator: (v) =>
-                    (v ?? '').trim().length > 2000 ? '最多 2000 字' : null,
+                validator: (v) {
+                  final n = (v ?? '').trim().length;
+                  if (n > 2000) return '最多 2000 字';
+                  if (_bodyRequired && n < 10) return '給地雷或大便時，請至少寫 10 個字說明原因';
+                  return null;
+                },
               ),
               const SizedBox(height: 12),
               TextFormField(

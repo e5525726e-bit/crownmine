@@ -19,6 +19,7 @@ void _phone(WidgetTester tester) {
 }
 
 void main() {
+  _negativeBodyTests();
   const place = Place(
     id: 'p1',
     name: '測試小吃店',
@@ -63,5 +64,35 @@ void main() {
     await tester.tap(find.text('送出評價'));
     await tester.pump();
     expect(find.text('請先選一個標記'), findsOneWidget);
+  });
+}
+
+void _negativeBodyTests() {
+  const place = Place(
+    id: 'p2',
+    name: '測試地雷店',
+    address: '台北市',
+    types: ['restaurant'],
+    primaryType: 'restaurant',
+  );
+
+  testWidgets('選地雷沒寫 10 字不能送出', (tester) async {
+    _phone(tester);
+    await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Verdict.mine.label));
+    await tester.pumpAndSettle();
+    expect(find.text('說說你的真實體驗（負評至少 10 字）'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField).first, '很雷');
+    await tester.scrollUntilVisible(
+      find.text('送出評價'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.text('送出評價'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('送出評價'));
+    await tester.pumpAndSettle();
+    expect(find.text('給地雷或大便時，請至少寫 10 個字說明原因'), findsOneWidget);
   });
 }
