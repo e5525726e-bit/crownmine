@@ -73,6 +73,17 @@ tool/sync_keys.dart                  把金鑰同步到 Android／iOS 原生設�
 test/                                模型測試與畫面 smoke test
 ```
 
+## 一鍵建立 Supabase（不用碰 Supabase 網頁）
+
+1. 在 <https://supabase.com/dashboard> 用 GitHub 登入一次（會自動建立預設組織）。
+2. 到 <https://supabase.com/dashboard/account/tokens> 按 **Generate new token**，名稱隨意，複製 `sbp_` 開頭的權杖。
+3. 到 repo 的 **Actions → Supabase 一鍵建置 → Run workflow**，貼上權杖與 Google 金鑰，按 Run。
+4. 約 5 分鐘後專案建好、資料庫初始化完成、設定寫進 `dart_defines.json`，並自動重新建置 APK。
+5. 完成後可到 Supabase 帳號設定撤銷該權杖。
+
+> `dart_defines.json` 內的三把金鑰都是會包進 App 的用戶端金鑰，放在私人 repo 可接受；
+> 若 repo 改為公開或要上架，請先到 Google Cloud 為金鑰設定 Android 應用程式限制。
+
 ## 不裝 Flutter 也能試用（Android）
 
 每次推到 `main`，GitHub Actions 會自動建置 Android 安裝檔並放在

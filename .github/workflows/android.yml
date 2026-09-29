@@ -41,7 +41,9 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPPORT_EMAIL: ${{ secrets.SUPPORT_EMAIL }}
         run: |
-          cat > dart_defines.json <<JSON
+          # 優先順序：GitHub secrets > repo 內的 dart_defines.json > 空值
+          if [ -n "$GOOGLE_PLACES_API_KEY" ]; then
+            cat > dart_defines.json <<JSON
           {
             "GOOGLE_PLACES_API_KEY": "${GOOGLE_PLACES_API_KEY}",
             "SUPABASE_URL": "${SUPABASE_URL}",
@@ -49,10 +51,14 @@ jobs:
             "SUPPORT_EMAIL": "${SUPPORT_EMAIL:-support@example.com}"
           }
           JSON
-          echo "MAPS_API_KEY=${GOOGLE_PLACES_API_KEY}" >> android/local.properties
-          if [ -z "$GOOGLE_PLACES_API_KEY" ]; then
-            echo "::warning::尚未設定 secrets，這個 APK 會顯示『尚未設定 API 金鑰』畫面"
+            echo "使用 GitHub secrets"
+          elif [ -f dart_defines.json ]; then
+            echo "使用 repo 內的 dart_defines.json"
+          else
+            echo '{"GOOGLE_PLACES_API_KEY":"","SUPABASE_URL":"","SUPABASE_ANON_KEY":"","SUPPORT_EMAIL":"support@example.com"}' > dart_defines.json
+            echo "::warning::尚未設定金鑰，這個 APK 會顯示『尚未設定 API 金鑰』畫面"
           fi
+          echo "MAPS_API_KEY=$(jq -r .GOOGLE_PLACES_API_KEY dart_defines.json)" >> android/local.properties
 
       - name: 檢查與測試
         run: |

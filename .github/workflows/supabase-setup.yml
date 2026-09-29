@@ -1,0 +1,148 @@
+name: Supabase 一鍵建置
+
+# 只需執行一次。從 Actions 頁面手動觸發，填入 Supabase 個人存取權杖（Personal Access Token）。
+# 這支腳本會：
+#   1. 在你的 Supabase 帳號建立專案 crownmine（Tokyo）
+#   2. 等專案啟動後執行 supabase/migrations/0001_init.sql
+#   3. 關閉「Email 確認」讓測試期間註冊後直接登入
+#   4. 取得 Project URL 與 anon/publishable key，寫進 dart_defines.json 並提交到 main
+#   5. 觸發 Android APK 建置
+# 權杖只在這次執行中使用，不會被儲存；執行完可到 Supabase 帳號設定把它撤銷。
+
+on:
+  workflow_dispatch:
+    inputs:
+      supabase_access_token:
+        description: 'Supabase Personal Access Token（sbp_ 開頭）'
+        required: true
+      google_places_api_key:
+        description: 'Google Places / Maps API 金鑰（AIza 開頭）'
+        required: true
+      support_email:
+        description: '聯絡信箱'
+        required: false
+        default: 'e5525726e@gmail.com'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 遮蔽敏感值
+        run: |
+          echo "::add-mask::${{ inputs.supabase_access_token }}"
+          echo "::add-mask::${{ inputs.google_places_api_key }}"
+
+      - name: 建立 Supabase 專案並初始化
+        id: supa
+        env:
+          TOKEN: ${{ inputs.supabase_access_token }}
+        run: |
+          set -euo pipefail
+          api() { curl -sS -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" "$@"; }
+
+          echo "==> 取得組織"
+          orgs=$(api https://api.supabase.com/v1/organizations)
+          echo "$orgs" | jq -r '.[] | "  - \(.name) (\(.id))"'
+          org_id=$(echo "$orgs" | jq -r '.[0].id')
+          if [ -z "$org_id" ] || [ "$org_id" = "null" ]; then
+            echo "::error::找不到任何 Supabase 組織，請先在 supabase.com 登入一次讓它建立預設組織"; exit 1
+          fi
+
+          echo "==> 檢查是否已有 crownmine 專案"
+          projects=$(api https://api.supabase.com/v1/projects)
+          ref=$(echo "$projects" | jq -r '.[] | select(.name=="crownmine") | .id' | head -1)
+
+          if [ -z "$ref" ]; then
+            echo "==> 建立專案 crownmine（Tokyo）"
+            db_pass=$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | head -c 32)
+            echo "::add-mask::$db_pass"
+            created=$(api -X POST https://api.supabase.com/v1/projects \
+              -d "$(jq -n --arg org "$org_id" --arg pass "$db_pass" \
+                    '{name:"crownmine", organization_id:$org, db_pass:$pass, region:"ap-northeast-1"}')")
+            echo "$created" | jq -c 'del(.db_pass)'
+            ref=$(echo "$created" | jq -r '.id')
+            if [ -z "$ref" ] || [ "$ref" = "null" ]; then echo "::error::建立專案失敗"; exit 1; fi
+            fresh=1
+          else
+            echo "==> 已存在，沿用 ref=$ref"
+            fresh=0
+          fi
+
+          echo "==> 等待專案啟動"
+          for i in $(seq 1 60); do
+            status=$(api "https://api.supabase.com/v1/projects/$ref" | jq -r '.status')
+            echo "  [$i] $status"
+            [ "$status" = "ACTIVE_HEALTHY" ] && break
+            sleep 10
+          done
+          [ "$status" = "ACTIVE_HEALTHY" ] || { echo "::error::專案沒有在時間內啟動"; exit 1; }
+          sleep 15
+
+          echo "==> 執行資料庫初始化 SQL"
+          if [ "$fresh" = "1" ]; then
+            result=$(api -X POST "https://api.supabase.com/v1/projects/$ref/database/query" \
+              -d "$(jq -n --rawfile q supabase/migrations/0001_init.sql '{query:$q}')")
+            if echo "$result" | jq -e '.message' >/dev/null 2>&1; then
+              echo "::error::SQL 執行失敗：$(echo "$result" | jq -r '.message')"; exit 1
+            fi
+            echo "  SQL 完成"
+          else
+            echo "  專案已存在，略過 SQL（避免重複建立資料表）"
+          fi
+
+          echo "==> 關閉 Email 確認（測試期間）"
+          api -X PATCH "https://api.supabase.com/v1/projects/$ref/config/auth" \
+            -d '{"mailer_autoconfirm":true}' | jq -c '{mailer_autoconfirm}'
+
+          echo "==> 取得 API 金鑰"
+          keys=$(api "https://api.supabase.com/v1/projects/$ref/api-keys?reveal=true")
+          anon=$(echo "$keys" | jq -r '[.[] | select(.type=="publishable")][0].api_key // empty')
+          if [ -z "$anon" ]; then
+            anon=$(echo "$keys" | jq -r '.[] | select(.name=="anon") | .api_key')
+          fi
+          [ -n "$anon" ] || { echo "::error::拿不到 anon/publishable key"; exit 1; }
+
+          echo "url=https://$ref.supabase.co" >> "$GITHUB_OUTPUT"
+          echo "anon=$anon" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - name: 寫入 dart_defines.json 並提交
+        env:
+          GOOGLE_KEY: ${{ inputs.google_places_api_key }}
+          SUPA_URL: ${{ steps.supa.outputs.url }}
+          SUPA_ANON: ${{ steps.supa.outputs.anon }}
+          SUPPORT: ${{ inputs.support_email }}
+        run: |
+          jq -n --arg g "$GOOGLE_KEY" --arg u "$SUPA_URL" --arg a "$SUPA_ANON" --arg s "$SUPPORT" \
+            '{GOOGLE_PLACES_API_KEY:$g, SUPABASE_URL:$u, SUPABASE_ANON_KEY:$a, SUPPORT_EMAIL:$s}' \
+            > dart_defines.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f dart_defines.json
+          git commit -m "設定：加入 Supabase 專案 ${{ steps.supa.outputs.ref }} 與 Google 金鑰（自動產生）" || echo "沒有變更"
+          git push
+
+      - name: 觸發 Android APK 建置
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run android.yml --ref main
+
+      - name: 摘要
+        run: |
+          {
+            echo "## Supabase 建置完成"
+            echo ""
+            echo "- 專案：\`${{ steps.supa.outputs.ref }}\`"
+            echo "- URL：${{ steps.supa.outputs.url }}"
+            echo "- 已執行資料庫初始化、關閉 Email 確認"
+            echo "- 設定已寫入 \`dart_defines.json\` 並提交，Android APK 正在重新建置"
+            echo ""
+            echo "現在可以到 Supabase 帳號設定把這次用的 Access Token 撤銷。"
+          } >> "$GITHUB_STEP_SUMMARY"
