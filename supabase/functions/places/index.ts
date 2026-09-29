@@ -36,7 +36,8 @@ const TTL_DETAILS_MS = 30 * 24 * 3600 * 1000;
 
 const SEARCH_MASK = "places.id,places.displayName,places.formattedAddress,places.location,places.types," +
   "places.primaryType,places.primaryTypeDisplayName,places.photos,places.businessStatus," +
-  "places.googleMapsUri,nextPageToken";  // 不要 priceLevel：那會落到較貴的 Enterprise 計費
+  "places.googleMapsUri";  // 不要 priceLevel：那會落到較貴的 Enterprise 計費
+const TEXT_MASK = SEARCH_MASK + ",nextPageToken";  // 只有文字搜尋有分頁
 const DETAIL_MASK = "id,displayName,formattedAddress,location,types,primaryType,primaryTypeDisplayName," +
   "photos,businessStatus,googleMapsUri,priceLevel,regularOpeningHours,nationalPhoneNumber,websiteUri";
 
@@ -229,7 +230,7 @@ Deno.serve(async (req) => {
             textQuery: q, ...(includedType ? { includedType } : {}), regionCode: "TW", languageCode: "zh-TW", pageSize: 20,
             ...location, ...(pageToken ? { pageToken } : {}),
           }),
-        }, SEARCH_MASK);
+        }, TEXT_MASK);
         if (!last.ok) return last;
         const body = last.body as { places?: unknown[]; nextPageToken?: string };
         all.push(...(body.places ?? []));
