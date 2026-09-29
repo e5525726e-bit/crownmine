@@ -5,7 +5,7 @@ const String kFoodOnlyMapStyle = '''
 [
   {"featureType": "poi", "stylers": [{"visibility": "off"}]},
   {"featureType": "transit", "stylers": [{"visibility": "on"}]},
-  {"featureType": "transit.line", "elementType": "geometry", "stylers": [{"visibility": "on"}, {"color": "#5B4FE9"}, {"weight": 3}]},
+  {"featureType": "transit.line", "elementType": "geometry", "stylers": [{"visibility": "on"}, {"color": "#7C6FF0"}, {"weight": 2}]},
   {"featureType": "transit.line", "elementType": "labels", "stylers": [{"visibility": "on"}]},
   {"featureType": "transit.station.rail", "elementType": "labels.icon", "stylers": [{"visibility": "on"}]},
   {"featureType": "transit.station.rail", "elementType": "labels.text", "stylers": [{"visibility": "on"}]},

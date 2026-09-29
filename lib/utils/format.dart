@@ -16,8 +16,11 @@ String fmtRelative(DateTime d) {
 /// 把例外訊息整理成可以直接顯示給使用者的一行文字。
 String friendlyError(Object e) {
   final s = e.toString();
-  if (s.contains('SocketException') || s.contains('Failed host lookup')) {
-    return '沒有網路連線，請稍後再試';
+  if (s.contains('SocketException') ||
+      s.contains('Failed host lookup') ||
+      s.contains('Failed to fetch') ||
+      s.contains('ClientException')) {
+    return '連不上伺服器，請確認網路後再試';
   }
   if (s.contains('Invalid login credentials')) return '帳號或密碼錯誤';
   if (s.contains('User already registered')) return '這個 Email 已經註冊過了';
