@@ -12,6 +12,7 @@ import '../../models/verdict.dart';
 import '../../widgets/apple_dialogs.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/google_attribution.dart';
+import '../../widgets/photo_strip.dart';
 import '../../widgets/inset_group.dart';
 import '../../widgets/verdict_summary.dart';
 import '../auth/login_screen.dart';
@@ -226,7 +227,12 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
               child: ListView(
                 padding: barInsets(context),
                 children: [
-                  if (p.photos.isNotEmpty) _HeaderPhoto(place: p),
+                  if (p.photos.length == 1) _HeaderPhoto(place: p),
+                  if (p.photos.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: PhotoStrip(googlePhotos: p.photos, height: 180),
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Text(p.name, style: text.headlineLarge),

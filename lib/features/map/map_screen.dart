@@ -17,6 +17,7 @@ import '../../widgets/apple_bars.dart';
 import '../../widgets/category_chips.dart';
 import '../../widgets/google_attribution.dart';
 import '../../widgets/inset_group.dart';
+import '../../widgets/photo_strip.dart';
 import '../../widgets/place_thumbnail.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/verdict_icon.dart';
@@ -477,32 +478,74 @@ class _MapScreenState extends State<MapScreen> {
     ));
   }
 
+  /// 店家照片：Google 照片（搜尋結果自帶，沒有就再查一次詳細資料）＋食客上傳的評價照片。
+  Future<({List<String> user, List<PlacePhoto> google})> _photosOf(
+      String placeId, {List<PlacePhoto> known = const []}) async {
+    final userFuture = reviewRepo
+        .reviewsFor(placeId)
+        .then((rs) => [for (final r in rs) ...r.photoUrls])
+        .catchError((_) => <String>[]);
+    final googleFuture = known.isNotEmpty
+        ? Future.value(known)
+        : placesService
+            .getDetails(placeId)
+            .then((d) => d.photos)
+            .catchError((_) => <PlacePhoto>[]);
+    return (user: await userFuture, google: await googleFuture);
+  }
+
+  Widget _photoSection(String placeId, {List<PlacePhoto> known = const []}) =>
+      FutureBuilder<({List<String> user, List<PlacePhoto> google})>(
+        future: _photosOf(placeId, known: known),
+        builder: (context, snap) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: PhotoStrip(
+            loading: !snap.hasData,
+            userPhotoUrls: snap.data?.user ?? const [],
+            googlePhotos: snap.data?.google ?? const [],
+            height: 140,
+          ),
+        ),
+      );
+
   void _showUnreviewed(Place p) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(p.name, style: Theme.of(ctx).textTheme.titleLarge),
-            Text(
-              [if (p.primaryTypeLabel != null) p.primaryTypeLabel!, p.address]
-                  .join(' · '),
-              style: Theme.of(ctx).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            Text('還沒有人評價這家店', style: Theme.of(ctx).textTheme.bodyMedium),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _open(p.id, initial: p);
-              },
-              icon: const Icon(CupertinoIcons.square_pencil),
-              label: const Text('查看店家並寫第一則評價'),
+            _photoSection(p.id, known: p.photos),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(p.name, style: Theme.of(ctx).textTheme.titleLarge),
+                  Text(
+                    [
+                      if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
+                      p.address
+                    ].join(' · '),
+                    style: Theme.of(ctx).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text('還沒有人評價這家店',
+                      style: Theme.of(ctx).textTheme.bodyMedium),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _open(p.id, initial: p);
+                    },
+                    icon: const Icon(CupertinoIcons.square_pencil),
+                    label: const Text('查看店家並寫第一則評價'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -514,37 +557,48 @@ class _MapScreenState extends State<MapScreen> {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                VerdictIcon(p.stats.dominant!, size: 36),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            _photoSection(p.placeId),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(p.name, style: Theme.of(ctx).textTheme.titleLarge),
-                      Text(p.address, style: Theme.of(ctx).textTheme.bodySmall),
+                      VerdictIcon(p.stats.dominant!, size: 36),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(p.name,
+                                style: Theme.of(ctx).textTheme.titleLarge),
+                            Text(p.address,
+                                style: Theme.of(ctx).textTheme.bodySmall),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            VerdictSummary(p.stats),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _open(p.placeId);
-              },
-              icon: const Icon(CupertinoIcons.chevron_right_circle_fill),
-              label: Text('查看店家與 ${p.stats.total} 則評價'),
+                  const SizedBox(height: 12),
+                  VerdictSummary(p.stats),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _open(p.placeId);
+                    },
+                    icon: const Icon(CupertinoIcons.chevron_right_circle_fill),
+                    label: Text('查看店家與 ${p.stats.total} 則評價'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
