@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/location_hub.dart';
+
 import '../place/place_detail_screen.dart';
 
 import '../map/map_screen.dart';
@@ -21,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    LocationHub.warmUp();
     // 分享連結（網頁版）：?place=<place_id> 直接開店家頁
     final placeId = Uri.base.queryParameters['place'];
     if (placeId != null && placeId.isNotEmpty) {

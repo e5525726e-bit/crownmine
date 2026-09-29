@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../di.dart';
@@ -11,6 +10,7 @@ import '../../models/food_category.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
 import '../../models/verdict.dart';
+import '../../services/location_hub.dart';
 import '../../utils/format.dart';
 import '../../widgets/apple_bars.dart';
 import '../../widgets/category_chips.dart';
@@ -47,19 +47,50 @@ class _MapScreenState extends State<MapScreen> {
   bool _loading = false;
   bool _myLocation = false;
   String? _error;
+  StreamSubscription<({double lat, double lng})>? _locSub;
+
+  /// 地圖還沒建立好時先記著要移去的位置，建立後馬上移過去。
+  LatLng? _pendingCenter;
   FoodCategory _category = FoodCategory.all;
 
   @override
   void initState() {
     super.initState();
+    // 已經知道位置（上次存的或剛定位到的）就直接從那裡開始
+    final known = LocationHub.last;
+    if (known != null) {
+      _myPos = LatLng(known.lat, known.lng);
+      _pendingCenter = _myPos;
+    }
+    // 之後每次定位到新位置（例如 App 一打開的自動定位）就把畫面移過去
+    _locSub = LocationHub.updates.listen((p) {
+      if (!mounted) return;
+      final here = LatLng(p.lat, p.lng);
+      setState(() {
+        _myLocation = true;
+        _myPos = here;
+      });
+      _moveTo(here);
+    });
     _prepare();
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _locSub?.cancel();
     _controller?.dispose();
     super.dispose();
+  }
+
+  Future<void> _moveTo(LatLng here) async {
+    final c = _controller;
+    if (c == null) {
+      _pendingCenter = here;
+      return;
+    }
+    _pendingCenter = null;
+    await c.animateCamera(CameraUpdate.newLatLngZoom(here, 16));
   }
 
   Future<void> _prepare() async {
@@ -68,36 +99,20 @@ class _MapScreenState extends State<MapScreen> {
     await VerdictMarkerIcons.preload(dpr);
     _iconsReady = true;
     if (mounted) setState(() {});
-    // 一打開就定位（第一次會跳出權限詢問）；拒絕就留在預設位置，不吵使用者
-    await _locateMe(silent: true);
+    // 一打開就定位（App 啟動時已開始；這裡確保完成）；拒絕就留在上次或預設位置
+    await LocationHub.warmUp();
   }
 
   Future<void> _locateMe({bool silent = false}) async {
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        if (!silent) _toast('請先開啟手機的定位服務');
-        return;
-      }
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        if (!silent) _toast('需要定位權限才能移到目前位置，請到系統設定開啟');
-        return;
-      }
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.high),
-      );
-      final here = LatLng(pos.latitude, pos.longitude);
-      if (!mounted) return;
+      final p = await LocationHub.locate(silent: silent);
+      if (p == null || !mounted) return;
+      final here = LatLng(p.lat, p.lng);
       setState(() {
         _myLocation = true;
         _myPos = here;
       });
-      await _controller?.animateCamera(CameraUpdate.newLatLngZoom(here, 16));
+      await _moveTo(here);
     } catch (e) {
       if (!silent) _toast(friendlyError(e));
     }
@@ -316,7 +331,9 @@ class _MapScreenState extends State<MapScreen> {
         builder: (context) => Stack(
           children: [
             GoogleMap(
-              initialCameraPosition: _taipei,
+              initialCameraPosition: _myPos == null
+                  ? _taipei
+                  : CameraPosition(target: _myPos!, zoom: 16),
               style: kFoodOnlyMapStyle,
               myLocationEnabled: _myLocation,
               myLocationButtonEnabled: false,
@@ -325,6 +342,11 @@ class _MapScreenState extends State<MapScreen> {
               markers: _markers,
               onMapCreated: (c) {
                 _controller = c;
+                final pending = _pendingCenter;
+                if (pending != null) {
+                  _pendingCenter = null;
+                  c.moveCamera(CameraUpdate.newLatLngZoom(pending, 16));
+                }
                 _reload();
               },
               onCameraIdle: _onCameraIdle,

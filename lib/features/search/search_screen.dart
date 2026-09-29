@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../../di.dart';
 import '../../models/food_category.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
 import '../../models/tw_city.dart';
+import '../../services/location_hub.dart';
 import '../../widgets/async_body.dart';
 import '../../widgets/category_chips.dart';
 import '../../widgets/google_attribution.dart';
@@ -50,29 +50,19 @@ class _SearchScreenState extends State<SearchScreen> {
     _detectCity();
   }
 
-  /// 用定位判斷所在縣市（先用上次已知位置，沒有再實際定位一次）。
+  /// 用定位判斷所在縣市（App 啟動時的自動定位；有上次位置就先用）。
   Future<void> _detectCity() async {
     try {
-      var pos = await Geolocator.getLastKnownPosition();
+      var pos = LocationHub.last;
       if (pos == null) {
-        var perm = await Geolocator.checkPermission();
-        if (perm == LocationPermission.denied) {
-          perm = await Geolocator.requestPermission();
-        }
-        if (perm == LocationPermission.denied ||
-            perm == LocationPermission.deniedForever) {
-          return;
-        }
-        pos = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.low,
-              timeLimit: Duration(seconds: 8)),
-        );
+        await LocationHub.warmUp();
+        pos = LocationHub.last;
       }
+      if (pos == null) return;
       // 先問附近任何一家店的地址（最準，後端有快取），不行再用粗略的範圍判斷
-      final c = await _cityFromNearby(pos.latitude, pos.longitude) ??
-          cityAt(pos.latitude, pos.longitude) ??
-          nearestCity(pos.latitude, pos.longitude);
+      final c = await _cityFromNearby(pos.lat, pos.lng) ??
+          cityAt(pos.lat, pos.lng) ??
+          nearestCity(pos.lat, pos.lng);
       if (!mounted || !_cityAuto) return;
       setState(() => _city = c);
     } catch (_) {
