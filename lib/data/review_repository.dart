@@ -118,7 +118,7 @@ class ReviewRepository {
   // --------------------------------------------------------------- reviews
 
   static const _reviewSelect = 'id, place_id, user_id, verdict, body, '
-      'price_paid, visited_on, receipt_path, created_at, '
+      'price_paid, visited_on, receipt_path, tags, created_at, '
       'profiles(display_name), review_photos(storage_path)';
 
   Future<List<Review>> reviewsFor(String placeId) async {
@@ -168,6 +168,7 @@ class ReviewRepository {
     DateTime? visitedOn,
     List<XFile> photos = const [],
     XFile? receipt,
+    List<ReviewTag> tags = const [],
   }) async {
     final uid = currentUser!.id;
     await cachePlace(place);
@@ -185,6 +186,7 @@ class ReviewRepository {
       'body': body.trim(),
       'price_paid': pricePaid,
       'visited_on': visitedOn?.toIso8601String().substring(0, 10),
+      'tags': tags.map((t) => t.dbValue).toList(),
       'status': 'visible',
     };
     if (receiptPath != null) row['receipt_path'] = receiptPath;

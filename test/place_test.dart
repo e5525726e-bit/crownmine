@@ -38,23 +38,31 @@ void main() {
     expect(place.toString().contains('不該出現'), isFalse);
   });
 
+  test('IG 標籤圖示：負面判斷才有禁止線', () {
+    expect(ReviewTag.ig.assetFor(Verdict.crown), 'assets/icons/ig.svg');
+    expect(ReviewTag.ig.assetFor(Verdict.green), 'assets/icons/ig.svg');
+    expect(ReviewTag.ig.assetFor(Verdict.mine), 'assets/icons/ig_no.svg');
+    expect(ReviewTag.ig.assetFor(Verdict.poop), 'assets/icons/ig_no.svg');
+    expect(ReviewTag.ig.assetFor(null), 'assets/icons/ig.svg');
+    expect(ReviewTag.listFromDb(['ig', 'x', 'photogenic']), [ReviewTag.ig, ReviewTag.photogenic]);
+  });
+
   test('Verdict 對應資料庫值', () {
     for (final v in Verdict.values) {
       expect(Verdict.fromDb(v.dbValue), v);
     }
     expect(Verdict.mine.isNegative, isTrue);
-    expect(Verdict.igtrap.isNegative, isTrue);
-    expect(Verdict.camera.isNegative, isFalse);
     expect(Verdict.poop.isNegative, isTrue);
     expect(Verdict.crown.isNegative, isFalse);
     expect(Verdict.green.isNegative, isFalse);
   });
 
-  test('PlaceStats 六種計數', () {
-    final s = PlaceStats.fromRow({'crowns': 3, 'greens': 2, 'mines': 1, 'poops': 0, 'cameras': 4, 'igtraps': 1});
-    expect(s.total, 11);
-    expect(s.count(Verdict.camera), 4);
-    expect(s.count(Verdict.igtrap), 1);
+  test('PlaceStats 四種計數與標籤', () {
+    final s = PlaceStats.fromRow({'crowns': 3, 'greens': 2, 'mines': 1, 'poops': 0, 'igs': 4, 'photogenics': 1});
+    expect(s.total, 6);
+    expect(s.tagCount(ReviewTag.ig), 4);
+    expect(s.isTagged(ReviewTag.ig), isTrue);
+    expect(s.isTagged(ReviewTag.photogenic), isFalse);
     expect(s.count(Verdict.crown), 3);
     expect(s.count(Verdict.green), 2);
     expect(s.count(Verdict.mine), 1);
@@ -67,7 +75,6 @@ void _dominantTests() {
     expect(const PlaceStats().dominant, isNull);
     expect(const PlaceStats(crowns: 1, poops: 4).dominant, Verdict.poop);
     expect(const PlaceStats(crowns: 2, mines: 2).dominant, Verdict.crown);
-    expect(const PlaceStats(cameras: 5, crowns: 1).dominant, Verdict.camera);
     expect(const PlaceStats(greens: 3, mines: 1).dominant, Verdict.green);
   });
 }

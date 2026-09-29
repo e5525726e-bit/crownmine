@@ -5,8 +5,8 @@
 
 create extension if not exists pg_trgm;
 
--- 六種標記：皇冠（真心推薦）、網美店、綠燈（普通中規中矩）、地雷（普通又貴）、IG 推薦但不推、大便（難吃／態度環境很差）
-create type public.verdict as enum ('crown', 'camera', 'green', 'mine', 'igtrap', 'poop');
+-- 四種核心判斷：皇冠（真心推薦）、綠燈（普通中規中矩）、地雷（普通又貴）、大便（難吃／態度環境很差）
+create type public.verdict as enum ('crown', 'green', 'mine', 'poop');
 
 -- ---------------------------------------------------------------------
 -- 使用者公開資料（auth.users 建立時自動產生）
@@ -64,6 +64,7 @@ create table public.reviews (
   price_paid   integer check (price_paid is null or price_paid between 0 and 100000),
   visited_on   date,
   receipt_path text,                       -- 消費證明（私有 bucket）
+  tags         text[] not null default '{}' check (tags <@ array['ig', 'photogenic']),  -- 附加標籤：IG 網紅店、網美店
   status       text not null default 'visible' check (status in ('visible', 'hidden', 'removed')),
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now(),
@@ -129,18 +130,18 @@ create table public.blocks (
 );
 
 -- ---------------------------------------------------------------------
--- 統計 view：每家店六種標記各幾個
+-- 統計 view：每家店四種核心判斷各幾個、兩種標籤各被標幾次
 -- ---------------------------------------------------------------------
 create or replace view public.place_stats
 with (security_invoker = true) as
 select
   place_id,
-  count(*) filter (where verdict = 'crown')  as crowns,
-  count(*) filter (where verdict = 'camera') as cameras,
-  count(*) filter (where verdict = 'green')  as greens,
-  count(*) filter (where verdict = 'mine')   as mines,
-  count(*) filter (where verdict = 'igtrap') as igtraps,
-  count(*) filter (where verdict = 'poop')   as poops
+  count(*) filter (where verdict = 'crown') as crowns,
+  count(*) filter (where verdict = 'green') as greens,
+  count(*) filter (where verdict = 'mine')  as mines,
+  count(*) filter (where verdict = 'poop')  as poops,
+  count(*) filter (where 'ig' = any(tags))         as igs,
+  count(*) filter (where 'photogenic' = any(tags)) as photogenics
 from public.reviews
 where status = 'visible'
 group by place_id;
@@ -149,14 +150,14 @@ group by place_id;
 create or replace function public.search_reviewed_places(q text)
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, cameras bigint, greens bigint, mines bigint, igtraps bigint, poops bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.cameras, s.greens, s.mines, s.igtraps, s.poops
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where q = '' or p.name ilike '%' || q || '%' or p.address ilike '%' || q || '%'
-  order by (s.crowns + s.cameras + s.greens + s.mines + s.igtraps + s.poops) desc, p.name
+  order by (s.crowns + s.greens + s.mines + s.poops) desc, p.name
   limit 50;
 $$;
 
@@ -167,15 +168,15 @@ create or replace function public.places_in_bounds(
 )
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, cameras bigint, greens bigint, mines bigint, igtraps bigint, poops bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.cameras, s.greens, s.mines, s.igtraps, s.poops
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where p.lat between min_lat and max_lat
     and p.lng between min_lng and max_lng
-  order by (s.crowns + s.cameras + s.greens + s.mines + s.igtraps + s.poops) desc
+  order by (s.crowns + s.greens + s.mines + s.poops) desc
   limit 200;
 $$;
 

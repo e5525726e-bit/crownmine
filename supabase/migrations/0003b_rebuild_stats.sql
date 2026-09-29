@@ -1,17 +1,17 @@
--- 重建統計 view 與搜尋函式，加入 cameras / igtraps 欄位（回傳型別改變，需先 drop）
--- 統計 view：每家店六種標記各幾個
+-- 重建統計 view 與搜尋函式：四種核心判斷 + igs / photogenics（回傳型別改變，需先 drop）
+-- 統計 view：每家店四種核心判斷各幾個、兩種標籤各被標幾次
 -- ---------------------------------------------------------------------
 drop view if exists public.place_stats;
 create view public.place_stats
 with (security_invoker = true) as
 select
   place_id,
-  count(*) filter (where verdict = 'crown')  as crowns,
-  count(*) filter (where verdict = 'camera') as cameras,
-  count(*) filter (where verdict = 'green')  as greens,
-  count(*) filter (where verdict = 'mine')   as mines,
-  count(*) filter (where verdict = 'igtrap') as igtraps,
-  count(*) filter (where verdict = 'poop')   as poops
+  count(*) filter (where verdict = 'crown') as crowns,
+  count(*) filter (where verdict = 'green') as greens,
+  count(*) filter (where verdict = 'mine')  as mines,
+  count(*) filter (where verdict = 'poop')  as poops,
+  count(*) filter (where 'ig' = any(tags))         as igs,
+  count(*) filter (where 'photogenic' = any(tags)) as photogenics
 from public.reviews
 where status = 'visible'
 group by place_id;
@@ -21,14 +21,14 @@ drop function if exists public.search_reviewed_places(text);
 create function public.search_reviewed_places(q text)
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, cameras bigint, greens bigint, mines bigint, igtraps bigint, poops bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.cameras, s.greens, s.mines, s.igtraps, s.poops
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where q = '' or p.name ilike '%' || q || '%' or p.address ilike '%' || q || '%'
-  order by (s.crowns + s.cameras + s.greens + s.mines + s.igtraps + s.poops) desc, p.name
+  order by (s.crowns + s.greens + s.mines + s.poops) desc, p.name
   limit 50;
 $$;
 
@@ -40,15 +40,15 @@ create function public.places_in_bounds(
 )
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
-  crowns bigint, cameras bigint, greens bigint, mines bigint, igtraps bigint, poops bigint
+  crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint
 ) language sql stable set search_path = public as $$
   select p.place_id, p.name, p.address, p.lat, p.lng,
-         s.crowns, s.cameras, s.greens, s.mines, s.igtraps, s.poops
+         s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
   where p.lat between min_lat and max_lat
     and p.lng between min_lng and max_lng
-  order by (s.crowns + s.cameras + s.greens + s.mines + s.igtraps + s.poops) desc
+  order by (s.crowns + s.greens + s.mines + s.poops) desc
   limit 200;
 $$;
 

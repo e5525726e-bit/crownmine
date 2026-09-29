@@ -54,21 +54,30 @@ class VerdictMarkerIcons {
     }
   }
 
-  /// 依標記種類與評價數取得圖示（同一組合只畫一次）。
-  static Future<BitmapDescriptor> icon(Verdict v, int total) async {
+  static final Map<String, PictureInfo> _tagPictures = {};
+
+  /// 依標記種類、評價數、是否為 IG 網紅店取得圖示（同一組合只畫一次）。
+  static Future<BitmapDescriptor> icon(Verdict v, int total, {bool igBadge = false}) async {
     final tier = MarkerTier.forCount(total);
-    final key = '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}';
-    return _cache[key] ??= await _render(v, tier, total);
+    final key = '${v.dbValue}-${tier.name}-${tier.showCount ? total : 0}-${igBadge ? 'ig' : ''}';
+    return _cache[key] ??= await _render(v, tier, total, igBadge);
   }
 
-  static Future<BitmapDescriptor> _render(Verdict v, MarkerTier tier, int total) async {
-    final (bytes, size) = await renderPng(v, tier, total);
+  static Future<BitmapDescriptor> _render(Verdict v, MarkerTier tier, int total, bool igBadge) async {
+    final (bytes, size) = await renderPng(v, tier, total, igBadge: igBadge);
     return BitmapDescriptor.bytes(bytes, width: size.width, height: size.height);
   }
 
   /// 畫出大頭針的 PNG（回傳位元組與邏輯尺寸）。獨立出來方便預覽與測試。
-  static Future<(Uint8List, Size)> renderPng(Verdict v, MarkerTier tier, int total) async {
+  /// [igBadge] 為 true 時在左上角加 IG 徽章；負面判斷用有禁止線的版本。
+  static Future<(Uint8List, Size)> renderPng(Verdict v, MarkerTier tier, int total,
+      {bool igBadge = false}) async {
     final info = _pictures[v] ??= await vg.loadPicture(SvgAssetLoader(v.asset), null);
+    PictureInfo? ig;
+    if (igBadge) {
+      final asset = ReviewTag.ig.assetFor(v);
+      ig = _tagPictures[asset] ??= await vg.loadPicture(SvgAssetLoader(asset), null);
+    }
 
     final head = kPinHeadSize * tier.scale; // 針頭直徑
     final ring = 3.0 * tier.scale;          // 彩色外框寬
@@ -116,6 +125,20 @@ class VerdictMarkerIcons {
       ..scale(iconSize / info.size.width, iconSize / info.size.height)
       ..drawPicture(info.picture)
       ..restore();
+
+    // IG 網紅店徽章（左上角）
+    if (ig != null) {
+      final r = outerR * 0.5;
+      final c = Offset(headCenter.dx - outerR * 0.72, headCenter.dy - outerR * 0.72);
+      canvas.drawCircle(c, r + 1.5, Paint()..color = Colors.white);
+      canvas.drawCircle(c, r, Paint()..color = Colors.white);
+      canvas
+        ..save()
+        ..translate(c.dx - r * 0.8, c.dy - r * 0.8)
+        ..scale(r * 1.6 / ig.size.width, r * 1.6 / ig.size.height)
+        ..drawPicture(ig.picture)
+        ..restore();
+    }
 
     // 評價數徽章（右上角）
     if (tier.showCount) {

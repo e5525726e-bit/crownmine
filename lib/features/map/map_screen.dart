@@ -110,7 +110,8 @@ class _MapScreenState extends State<MapScreen> {
         markers.add(Marker(
           markerId: MarkerId(p.placeId),
           position: LatLng(p.lat!, p.lng!),
-          icon: await VerdictMarkerIcons.icon(dominant, p.stats.total),
+          icon: await VerdictMarkerIcons.icon(dominant, p.stats.total,
+              igBadge: p.stats.isTagged(ReviewTag.ig)),
           anchor: VerdictMarkerIcons.anchor,
           zIndexInt: p.stats.total,
           onTap: () => _showPlace(p),
@@ -228,25 +229,22 @@ class _Legend extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            LayoutBuilder(
-              builder: (context, c) => Wrap(
-                runSpacing: 4,
-                children: [
-                  for (final v in Verdict.values)
-                    SizedBox(
-                      width: c.maxWidth / 3,
-                      child: Row(
-                        children: [
-                          VerdictIcon(v, size: 16),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(v.label, style: text, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ),
-                        ],
-                      ),
+            Row(
+              children: [
+                for (final v in Verdict.values)
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        VerdictIcon(v, size: 18),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(v.label, style: text, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
             if (loading)
               const Padding(

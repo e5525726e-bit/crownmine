@@ -13,7 +13,7 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 void _phone(WidgetTester tester) {
-  tester.view.physicalSize = const Size(1170, 2532);
+  tester.view.physicalSize = const Size(1170, 3200);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
 }
@@ -27,7 +27,7 @@ void main() {
     primaryType: 'restaurant',
   );
 
-  testWidgets('寫評價頁顯示六種標記且可以選取', (tester) async {
+  testWidgets('寫評價頁顯示四種標記與兩種標籤且可以選取', (tester) async {
     _phone(tester);
     await tester.pumpWidget(_wrap(const WriteReviewScreen(place: place)));
     await tester.pumpAndSettle();
@@ -36,6 +36,9 @@ void main() {
       expect(find.text(v.label), findsOneWidget);
     }
     expect(find.text('測試小吃店'), findsOneWidget);
+    for (final t in ReviewTag.values) {
+      expect(find.text(t.label), findsOneWidget);
+    }
 
     await tester.ensureVisible(find.text(Verdict.poop.label));
     await tester.pumpAndSettle();

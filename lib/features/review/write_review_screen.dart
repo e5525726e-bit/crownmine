@@ -12,6 +12,7 @@ import '../../utils/format.dart';
 import '../../theme/motion.dart';
 import '../../widgets/apple_bars.dart';
 import '../../widgets/press_scale.dart';
+import '../../widgets/tag_icon.dart';
 import '../../widgets/verdict_icon.dart';
 
 class WriteReviewScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   final _picker = ImagePicker();
 
   Verdict? _verdict;
+  final Set<ReviewTag> _tags = {};
   late final _body = TextEditingController(text: widget.existing?.body ?? '');
   late final _price =
       TextEditingController(text: widget.existing?.pricePaid?.toString() ?? '');
@@ -41,6 +43,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   void initState() {
     super.initState();
     _verdict = widget.existing?.verdict;
+    _tags.addAll(widget.existing?.tags ?? const []);
     _visitedOn = widget.existing?.visitedOn;
   }
 
@@ -143,6 +146,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
         visitedOn: _visitedOn,
         photos: _photos,
         receipt: _receipt,
+        tags: _tags.toList(),
       );
       if (!mounted) return;
       // 完成回饋：與畫面關閉同一時刻
@@ -198,6 +202,21 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               ],
             ),
             const SizedBox(height: 20),
+            Text('這家店的特色（選填，可複選）', style: text.titleMedium),
+            const SizedBox(height: 8),
+            for (final t in ReviewTag.values)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _TagOption(
+                  tag: t,
+                  verdict: _verdict,
+                  selected: _tags.contains(t),
+                  onTap: () => setState(() {
+                    if (!_tags.add(t)) _tags.remove(t);
+                  }),
+                ),
+              ),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _body,
               minLines: 4,
@@ -364,6 +383,60 @@ class _VerdictOption extends StatelessWidget {
               verdict.hint,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TagOption extends StatelessWidget {
+  const _TagOption({
+    required this.tag,
+    required this.verdict,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final ReviewTag tag;
+  final Verdict? verdict;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PressScale(
+      onTap: onTap,
+      haptic: true,
+      scale: 0.985,
+      child: AnimatedContainer(
+        duration: reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: selected ? tag.color.withValues(alpha: 0.10) : theme.cardTheme.color,
+          border: Border.all(color: selected ? tag.color : Colors.transparent, width: 2),
+        ),
+        child: Row(
+          children: [
+            TagIcon(tag, verdict: verdict, size: 32),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tag.label,
+                      style: theme.textTheme.titleSmall?.copyWith(color: selected ? tag.color : null)),
+                  Text(tag.hint, style: theme.textTheme.bodySmall),
+                ],
+              ),
+            ),
+            Icon(
+              selected ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
+              color: selected ? tag.color : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ],
         ),

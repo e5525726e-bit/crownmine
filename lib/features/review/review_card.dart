@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/review.dart';
 import '../../utils/format.dart';
+import '../../widgets/tag_icon.dart';
 import '../../widgets/verdict_icon.dart';
 
 class ReviewCard extends StatelessWidget {
@@ -113,13 +114,15 @@ class ReviewCard extends StatelessWidget {
               padding: const EdgeInsets.only(right: 8),
               child: Text(r.body, style: text.bodyLarge),
             ),
-            if (r.pricePaid != null || r.visitedOn != null || r.hasReceipt)
+            if (r.pricePaid != null || r.visitedOn != null || r.hasReceipt || r.tags.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Wrap(
                   spacing: 6,
                   runSpacing: 6,
                   children: [
+                    for (final t in r.tags)
+                      _Tag(null, t.label, leading: TagIcon(t, verdict: r.verdict, size: 16), color: t.color),
                     if (r.pricePaid != null) _Tag(CupertinoIcons.money_dollar_circle, '每人約 \$${r.pricePaid}'),
                     if (r.visitedOn != null) _Tag(CupertinoIcons.calendar, '${fmtDate(r.visitedOn!)} 造訪'),
                     if (r.hasReceipt) _Tag(CupertinoIcons.checkmark_seal_fill, '附消費證明', accent: true),
@@ -150,27 +153,29 @@ class ReviewCard extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag(this.icon, this.label, {this.accent = false});
-  final IconData icon;
+  const _Tag(this.icon, this.label, {this.accent = false, this.leading, this.color});
+  final IconData? icon;
   final String label;
   final bool accent;
+  final Widget? leading;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = accent ? scheme.primary : scheme.onSurfaceVariant;
+    final fg = color ?? (accent ? scheme.primary : scheme.onSurfaceVariant);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: accent ? scheme.primary.withValues(alpha: 0.12) : scheme.surfaceContainerHighest,
+        color: (color != null || accent) ? fg.withValues(alpha: 0.12) : scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          leading ?? Icon(icon, size: 14, color: fg),
           const SizedBox(width: 4),
-          Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color)),
+          Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: fg)),
         ],
       ),
     );

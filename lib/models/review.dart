@@ -13,6 +13,7 @@ class Review {
     this.visitedOn,
     this.hasReceipt = false,
     this.photoUrls = const [],
+    this.tags = const [],
   });
 
   final String id;
@@ -28,6 +29,9 @@ class Review {
   /// 使用者有附上消費證明（收據照片）。
   final bool hasReceipt;
   final List<String> photoUrls;
+
+  /// 附加標籤（IG 網紅店、網美店）。
+  final List<ReviewTag> tags;
 
   factory Review.fromRow(
     Map<String, dynamic> r, {
@@ -48,6 +52,7 @@ class Review {
           ? null
           : DateTime.parse(r['visited_on'] as String),
       hasReceipt: r['receipt_path'] != null,
+      tags: ReviewTag.listFromDb(r['tags']),
       photoUrls: photos
           .map((p) => photoUrl((p as Map<String, dynamic>)['storage_path'] as String))
           .toList(),
@@ -85,25 +90,25 @@ class ReviewedPlace {
       );
 }
 
-/// 一家店的六種標記各有幾個。
+/// 一家店的四種核心判斷各有幾個，以及兩種附加標籤各被標了幾次。
 class PlaceStats {
   const PlaceStats({
     this.crowns = 0,
-    this.cameras = 0,
     this.greens = 0,
     this.mines = 0,
-    this.igtraps = 0,
     this.poops = 0,
+    this.igs = 0,
+    this.photogenics = 0,
   });
 
   final int crowns;
-  final int cameras;
   final int greens;
   final int mines;
-  final int igtraps;
   final int poops;
+  final int igs;
+  final int photogenics;
 
-  int get total => crowns + cameras + greens + mines + igtraps + poops;
+  int get total => crowns + greens + mines + poops;
 
   /// 最多人給的標記；平手時依 [Verdict.values] 的順序（皇冠優先）。
   Verdict? get dominant {
@@ -117,19 +122,25 @@ class PlaceStats {
 
   int count(Verdict v) => switch (v) {
         Verdict.crown => crowns,
-        Verdict.camera => cameras,
         Verdict.green => greens,
         Verdict.mine => mines,
-        Verdict.igtrap => igtraps,
         Verdict.poop => poops,
       };
 
+  int tagCount(ReviewTag t) => switch (t) {
+        ReviewTag.ig => igs,
+        ReviewTag.photogenic => photogenics,
+      };
+
+  /// 至少三分之一的評價標了這個標籤，就算是這家店的特徵（地圖徽章用）。
+  bool isTagged(ReviewTag t) => tagCount(t) > 0 && tagCount(t) * 3 >= total;
+
   factory PlaceStats.fromRow(Map<String, dynamic>? r) => PlaceStats(
         crowns: (r?['crowns'] as num?)?.toInt() ?? 0,
-        cameras: (r?['cameras'] as num?)?.toInt() ?? 0,
         greens: (r?['greens'] as num?)?.toInt() ?? 0,
         mines: (r?['mines'] as num?)?.toInt() ?? 0,
-        igtraps: (r?['igtraps'] as num?)?.toInt() ?? 0,
         poops: (r?['poops'] as num?)?.toInt() ?? 0,
+        igs: (r?['igs'] as num?)?.toInt() ?? 0,
+        photogenics: (r?['photogenics'] as num?)?.toInt() ?? 0,
       );
 }

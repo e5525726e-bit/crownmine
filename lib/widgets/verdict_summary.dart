@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../models/review.dart';
 import '../models/verdict.dart';
+import 'tag_icon.dart';
 import 'verdict_icon.dart';
 
-/// 四種標記的數量。compact 版用在列表右側，完整版用在店家頁。
+/// 四種核心判斷的數量，加上附加標籤被標的次數。
+/// compact 版用在列表右側，完整版用在店家頁。
 class VerdictSummary extends StatelessWidget {
   const VerdictSummary(this.stats, {super.key, this.compact = false});
 
@@ -13,6 +15,9 @@ class VerdictSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final dominant = stats.dominant;
+
     if (compact) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -26,47 +31,66 @@ class VerdictSummary extends StatelessWidget {
                   children: [
                     VerdictIcon(v, size: 18),
                     const SizedBox(width: 2),
-                    Text('${stats.count(v)}',
-                        style: Theme.of(context).textTheme.labelLarge),
+                    Text('${stats.count(v)}', style: text.labelLarge),
                   ],
                 ),
+              ),
+          for (final t in ReviewTag.values)
+            if (stats.isTagged(t))
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: TagIcon(t, verdict: dominant, size: 18),
               ),
         ],
       );
     }
 
-    final text = Theme.of(context).textTheme;
-    // 六種標記：每列三個
-    return LayoutBuilder(
-      builder: (context, c) {
-        final w = c.maxWidth / 3;
-        return Wrap(
-          runSpacing: 12,
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final v in Verdict.values)
-              SizedBox(
-                width: w,
+              Expanded(
                 child: Column(
                   children: [
-                    VerdictIcon(v, size: 36),
+                    VerdictIcon(v, size: 40),
                     const SizedBox(height: 4),
                     Text('${stats.count(v)}',
                         style: text.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold, color: v.color)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(v.label,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.labelSmall),
-                    ),
+                    Text(v.label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.labelSmall),
                   ],
                 ),
               ),
           ],
-        );
-      },
+        ),
+        if (stats.igs > 0 || stats.photogenics > 0) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final t in ReviewTag.values)
+                if (stats.tagCount(t) > 0)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TagIcon(t, verdict: dominant, size: 22),
+                      const SizedBox(width: 6),
+                      Text('${stats.tagCount(t)} 人標記為${t.label}',
+                          style: text.bodySmall),
+                    ],
+                  ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

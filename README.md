@@ -5,20 +5,23 @@
 目前狀態：**開發中，尚未上架**。程式碼可通過 `flutter analyze` 與 `flutter test`，
 需要接上你自己的 Google 與 Supabase 帳號才能在手機上跑起來（步驟見下方）。
 
-## 六種評價標記
+## 評價方式：四種核心判斷 + 附加標籤
 
-| 標記 | 意思 | 圖案 |
+| 核心判斷 | 意思 | 圖案 |
 |---|---|---|
 | 皇冠 | 真心推薦 | `assets/icons/crown.svg` |
-| 相機 | 網美店：拍照好看，重點不在吃 | `assets/icons/camera.svg` |
 | 綠燈（紅綠燈造型） | 普通中規中矩 | `assets/icons/green_light.svg` |
 | 地雷 | 普通又貴 | `assets/icons/landmine.svg` |
-| 禁止圈＋相機 App | IG 推薦但不推：網路很紅，實際普通 | `assets/icons/igtrap.svg` |
 | 大便 | 難吃／態度環境很差 | `assets/icons/poop.svg` |
 
-已上線的資料庫要加新標記時，執行 Actions → **Supabase 執行 SQL**（預設會跑 `0002a`、`0002b`）。
+| 附加標籤（可複選） | 意思 | 圖案 |
+|---|---|---|
+| IG 網紅店 | 社群上很紅的店 | 皇冠、綠燈時用 `ig.svg`；地雷、大便時用有禁止斜線的 `ig_no.svg` |
+| 網美店 | 拍照好看，重點不在吃 | `assets/icons/camera.svg` |
 
-圖案目前是簡易向量圖，之後可以直接換成設計師畫的 SVG，檔名不變即可。
+同一家店可以同時是「真心推薦」和「IG 網紅店」。地圖上大頭針顯示核心判斷，
+至少三分之一的評價標了 IG 網紅店時，左上角會多一個 IG 徽章。
+已上線的資料庫升級：Actions → **Supabase 執行 SQL**（預設跑 `0003a`、`0003b`）。
 
 ## 功能
 
