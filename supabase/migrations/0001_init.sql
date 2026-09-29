@@ -46,6 +46,7 @@ create table public.places (
   lat             double precision,
   lng             double precision,
   primary_type    text,
+  types           text[] not null default '{}',
   google_maps_uri text,
   cached_at       timestamptz not null default now()
 );
@@ -158,9 +159,10 @@ group by place_id;
 create or replace function public.search_reviewed_places(q text)
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
+  primary_type text, types text[],
   crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint
 ) language sql stable set search_path = public as $$
-  select p.place_id, p.name, p.address, p.lat, p.lng,
+  select p.place_id, p.name, p.address, p.lat, p.lng, p.primary_type, p.types,
          s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires
   from public.places p
   join public.place_stats s on s.place_id = p.place_id
@@ -176,9 +178,10 @@ create or replace function public.places_in_bounds(
 )
 returns table (
   place_id text, name text, address text, lat double precision, lng double precision,
+  primary_type text, types text[],
   crowns bigint, greens bigint, mines bigint, poops bigint, igs bigint, photogenics bigint, richs bigint, dates bigint, fires bigint
 ) language sql stable set search_path = public as $$
-  select p.place_id, p.name, p.address, p.lat, p.lng,
+  select p.place_id, p.name, p.address, p.lat, p.lng, p.primary_type, p.types,
          s.crowns, s.greens, s.mines, s.poops, s.igs, s.photogenics, s.richs, s.dates, s.fires
   from public.places p
   join public.place_stats s on s.place_id = p.place_id

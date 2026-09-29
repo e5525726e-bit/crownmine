@@ -75,6 +75,7 @@ class ReviewRepository {
         'lat': p.lat,
         'lng': p.lng,
         'primary_type': p.primaryType,
+        'types': p.types,
         'google_maps_uri': p.googleMapsUri,
         'cached_at': DateTime.now().toUtc().toIso8601String(),
       });

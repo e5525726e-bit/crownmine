@@ -136,6 +136,7 @@ class Place {
         lat: (r['lat'] as num?)?.toDouble(),
         lng: (r['lng'] as num?)?.toDouble(),
         primaryType: r['primary_type'] as String?,
+        types: ((r['types'] as List?) ?? const []).cast<String>(),
         googleMapsUri: r['google_maps_uri'] as String?,
       );
 

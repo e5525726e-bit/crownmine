@@ -7,11 +7,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../di.dart';
+import '../../models/food_category.dart';
 import '../../models/place.dart';
 import '../../models/review.dart';
 import '../../models/verdict.dart';
 import '../../utils/format.dart';
 import '../../widgets/apple_bars.dart';
+import '../../widgets/category_chips.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/verdict_icon.dart';
 import '../../widgets/verdict_summary.dart';
@@ -45,6 +47,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _loading = false;
   bool _myLocation = false;
   String? _error;
+  FoodCategory _category = FoodCategory.all;
 
   @override
   void initState() {
@@ -129,8 +132,14 @@ class _MapScreenState extends State<MapScreen> {
       // 放大到街區等級時，向 Google 找範圍內所有餐飲店（尚無評價的也標出來）
       final zoomedOut = zoom < _minZoomForAllPlaces;
       final nearbyFuture = zoomedOut ? Future.value(<Place>[]) : _nearbyIn(b);
-      final places = await reviewedFuture;
-      final nearby = await nearbyFuture;
+      final places = (await reviewedFuture)
+          .where((p) => _category.matches(
+              types: p.types, primaryType: p.primaryType, name: p.name))
+          .toList();
+      final nearby = (await nearbyFuture)
+          .where((p) => _category.matches(
+              types: p.types, primaryType: p.primaryType, name: p.name))
+          .toList();
 
       final markers = <Marker>{};
       final reviewedIds = {for (final p in places) p.placeId};
@@ -197,7 +206,18 @@ class _MapScreenState extends State<MapScreen> {
         math.cos(lat * math.pi / 180) /
         2;
     final radius = math.sqrt(dLat * dLat + dLng * dLng).clamp(200.0, 1500.0);
-    return placesService.searchNearby(lat: lat, lng: lng, radiusMeters: radius);
+    // 只有關鍵字的種類（火鍋、小吃…）改用文字搜尋；其餘用類型精準過濾
+    if (!_category.isAll && !_category.hasTypes) {
+      return placesService.searchText(
+        _category.keyword,
+        lat: lat,
+        lng: lng,
+        radiusMeters: radius,
+        type: _category.searchType,
+      );
+    }
+    return placesService.searchNearby(
+        lat: lat, lng: lng, radiusMeters: radius, types: _category.types);
   }
 
   void _showUnreviewed(Place p) {
@@ -310,11 +330,29 @@ class _MapScreenState extends State<MapScreen> {
               onCameraIdle: _onCameraIdle,
             ),
             Positioned(
-              left: 12,
-              right: 12,
-              top: MediaQuery.paddingOf(context).top + 12,
-              child: _Legend(
-                  loading: _loading, error: _error, zoomedOut: _zoomedOut),
+              left: 0,
+              right: 0,
+              top: barInsets(context).top + 8,
+              child: Column(
+                children: [
+                  CategoryChips(
+                    selected: _category,
+                    onChanged: (c) {
+                      setState(() =>
+                          _category = c == _category ? FoodCategory.all : c);
+                      _reload();
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    child: _Legend(
+                        loading: _loading,
+                        error: _error,
+                        zoomedOut: _zoomedOut,
+                        category: _category),
+                  ),
+                ],
+              ),
             ),
             Positioned(
               right: 16,
@@ -358,10 +396,16 @@ class _LocateButton extends StatelessWidget {
 }
 
 class _Legend extends StatelessWidget {
-  const _Legend({required this.loading, this.error, required this.zoomedOut});
+  const _Legend({
+    required this.loading,
+    this.error,
+    required this.zoomedOut,
+    this.category = FoodCategory.all,
+  });
   final bool loading;
   final String? error;
   final bool zoomedOut;
+  final FoodCategory category;
 
   @override
   Widget build(BuildContext context) {
@@ -403,9 +447,13 @@ class _Legend extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                zoomedOut
-                    ? '放大地圖可顯示範圍內所有餐飲店（灰色小針＝尚無評價）'
-                    : '灰色小針＝尚無評價的餐飲店，點一下就能寫第一則',
+                category.isAll
+                    ? (zoomedOut
+                        ? '放大地圖可顯示範圍內所有餐飲店（灰色小針＝尚無評價）'
+                        : '灰色小針＝尚無評價的餐飲店，點一下就能寫第一則')
+                    : (zoomedOut
+                        ? '只顯示「${category.label}」；放大地圖可看到尚無評價的店'
+                        : '只顯示「${category.label}」，灰色小針＝尚無評價'),
                 style: text,
               ),
             ),

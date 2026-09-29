@@ -70,6 +70,8 @@ class ReviewedPlace {
     required this.stats,
     this.lat,
     this.lng,
+    this.primaryType,
+    this.types = const [],
   });
 
   final String placeId;
@@ -78,6 +80,8 @@ class ReviewedPlace {
   final PlaceStats stats;
   final double? lat;
   final double? lng;
+  final String? primaryType;
+  final List<String> types;
 
   bool get hasLocation => lat != null && lng != null;
 
@@ -88,6 +92,8 @@ class ReviewedPlace {
         stats: PlaceStats.fromRow(r),
         lat: (r['lat'] as num?)?.toDouble(),
         lng: (r['lng'] as num?)?.toDouble(),
+        primaryType: r['primary_type'] as String?,
+        types: ((r['types'] as List?) ?? const []).cast<String>(),
       );
 }
 

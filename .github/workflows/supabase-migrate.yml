@@ -8,7 +8,7 @@ on:
       files:
         description: '要執行的 SQL 檔，逗號分隔（相對 supabase/migrations/）'
         required: true
-        default: '0010_negative_body.sql'
+        default: '0011_place_types.sql'
 
 permissions:
   contents: read

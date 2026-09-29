@@ -43,6 +43,42 @@ enum FoodCategory {
   final String keyword;
   final List<String> types;
 
+  /// 店名裡出現這些字也算這個種類（給沒有 Google 類型的分類，以及已存的店用）。
+  List<String> get nameHints => switch (this) {
+        FoodCategory.all => const [],
+        FoodCategory.hotpot => const ['火鍋', '鍋物', '涮', '麻辣鍋', '石頭鍋'],
+        FoodCategory.japanese => const ['日式', '日本', '壽司', '拉麵', '丼', '居酒屋', '定食', '燒鳥'],
+        FoodCategory.korean => const ['韓式', '韓國', '韓'],
+        FoodCategory.chinese => const ['中式', '餐館', '熱炒', '合菜', '川菜', '粵菜', '港式', '小籠包'],
+        FoodCategory.snack => const ['小吃', '滷肉飯', '雞排', '鹽酥雞', '蚵仔', '肉圓', '碗粿', '滷味'],
+        FoodCategory.noodle => const ['麵', '麵線', '米粉', '粄條'],
+        FoodCategory.brunch => const ['早午餐', '早餐', 'Brunch', 'brunch'],
+        FoodCategory.cafe => const ['咖啡', 'Cafe', 'Café', 'cafe', 'Coffee', 'coffee'],
+        FoodCategory.dessert => const ['甜點', '蛋糕', '冰', '烘焙', '麵包', '甜品', '豆花', '布丁', '鬆餅'],
+        FoodCategory.drink => const ['手搖', '茶', '飲', '果汁', 'Tea', 'tea'],
+        FoodCategory.bbq => const ['燒肉', '燒烤', '烤肉', '串燒', '碳烤'],
+        FoodCategory.steak => const ['牛排', 'Steak', 'steak'],
+        FoodCategory.italian => const ['義式', '義大利', '披薩', 'Pizza', 'pizza', 'Pasta', 'pasta'],
+        FoodCategory.burger => const ['漢堡', '速食', 'Burger', 'burger', '麥當勞', '肯德基'],
+        FoodCategory.thai => const ['泰式', '泰國', '越南', '越式', '河粉', '打拋'],
+        FoodCategory.veg => const ['素食', '蔬食', '素'],
+        FoodCategory.seafood => const ['海鮮', '海產', '生蠔', '蝦', '魚'],
+        FoodCategory.bar => const ['酒吧', 'Bar', 'bar', '啤酒', '居酒屋'],
+        FoodCategory.bento => const ['便當', '餐盒', '自助餐'],
+      };
+
+  /// 已知類型與店名的店是否屬於這個種類（用來篩選已有評價的店）。
+  bool matches({
+    required List<String> types,
+    String? primaryType,
+    required String name,
+  }) {
+    if (isAll) return true;
+    if (primaryType != null && this.types.contains(primaryType)) return true;
+    if (types.any(this.types.contains)) return true;
+    return nameHints.any(name.contains);
+  }
+
   bool get isAll => this == all;
 
   /// 有 Google 類型可以精準過濾；否則只能用關鍵字。
