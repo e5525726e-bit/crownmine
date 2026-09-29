@@ -111,11 +111,13 @@ class ReviewCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Text(r.body, style: text.bodyLarge),
-            ),
+            if (r.body.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(r.body, style: text.bodyLarge),
+              ),
+            ],
             if (r.pricePaid != null ||
                 r.visitedOn != null ||
                 r.hasReceipt ||

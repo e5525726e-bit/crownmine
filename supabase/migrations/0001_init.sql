@@ -60,7 +60,7 @@ create table public.reviews (
   place_id     text not null references public.places (place_id) on delete cascade,
   user_id      uuid not null references public.profiles (id) on delete cascade,
   verdict      public.verdict not null,
-  body         text not null check (char_length(body) between 10 and 2000),
+  body         text not null default '' check (char_length(body) <= 2000),   -- 留言選填
   price_paid   integer check (price_paid is null or price_paid between 0 and 100000),
   visited_on   date,
   receipt_path text,                       -- 消費證明（私有 bucket）

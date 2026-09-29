@@ -227,7 +227,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 maxLines: 10,
                 maxLength: 2000,
                 decoration: const InputDecoration(
-                  labelText: '說說你的真實體驗',
+                  labelText: '說說你的真實體驗（選填）',
                   hintText: '吃了什麼、花了多少、服務和環境如何……',
                   border: OutlineInputBorder(),
                   alignLabelWithHint: true,

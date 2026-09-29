@@ -10,7 +10,7 @@ on:
       files:
         description: '要執行的 SQL 檔，逗號分隔（相對 supabase/migrations/）'
         required: true
-        default: '0003a_tags.sql,0003b_rebuild_stats.sql'
+        default: '0004_optional_body.sql'
 
 permissions:
   contents: read

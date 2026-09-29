@@ -46,7 +46,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                 leading: VerdictIcon(review.verdict, size: 32),
                 title: Text(place.name),
                 subtitle: Text(
-                  '${review.verdict.label} · ${fmtRelative(review.createdAt)}\n${review.body}',
+                  '${review.verdict.label} · ${fmtRelative(review.createdAt)}${review.body.trim().isEmpty ? '' : '\n${review.body}'}',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
