@@ -44,7 +44,7 @@ class _MapScreenState extends State<MapScreen> {
       CameraPosition(target: LatLng(25.0418, 121.5436), zoom: 13);
 
   /// 放大到這個等級以上才向 Google 查詢範圍內所有餐飲店。
-  static const double _minZoomForAllPlaces = 15;
+  static const double _minZoomForAllPlaces = 16;
 
   GoogleMapController? _controller;
   bool _iconsReady = false;
