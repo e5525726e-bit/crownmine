@@ -58,7 +58,16 @@ const List<TwCity> kTwCities = [
   TwCity('連江縣', ['連江縣'], 25.93, 119.85, 26.40, 120.55),
 ];
 
-/// 座標所在的縣市（重疊時取面積最小者）；不在台灣回傳 null。
+/// 地址所屬的縣市（Google 回的地址會寫「臺中市西區…」）。
+TwCity? cityOfAddress(String address) {
+  for (final c in kTwCities) {
+    if (c.inAddress(address)) return c;
+  }
+  return null;
+}
+
+/// 座標所在的縣市（粗略：外接矩形，重疊時取面積最小者）；不在台灣回傳 null。
+/// 邊界附近可能判錯，App 會優先用附近店家的地址來判斷，這只是備用。
 TwCity? cityAt(double lat, double lng) {
   TwCity? best;
   for (final c in kTwCities) {

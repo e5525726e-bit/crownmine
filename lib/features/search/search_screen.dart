@@ -69,13 +69,27 @@ class _SearchScreenState extends State<SearchScreen> {
               timeLimit: Duration(seconds: 8)),
         );
       }
-      final c = cityAt(pos.latitude, pos.longitude) ??
+      // 先問附近任何一家店的地址（最準，後端有快取），不行再用粗略的範圍判斷
+      final c = await _cityFromNearby(pos.latitude, pos.longitude) ??
+          cityAt(pos.latitude, pos.longitude) ??
           nearestCity(pos.latitude, pos.longitude);
       if (!mounted || !_cityAuto) return;
       setState(() => _city = c);
     } catch (_) {
       // 定位失敗就維持全台灣
     }
+  }
+
+  Future<TwCity?> _cityFromNearby(double lat, double lng) async {
+    try {
+      final near =
+          await placesService.searchNearby(lat: lat, lng: lng, radiusMeters: 500);
+      for (final p in near) {
+        final c = cityOfAddress(p.address);
+        if (c != null) return c;
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<void> _pickCity() async {
