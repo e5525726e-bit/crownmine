@@ -62,8 +62,10 @@ jobs:
           npx --yes supabase@latest functions deploy places --project-ref "$ref" --no-verify-jwt
           echo "==> 驗證"
           url=$(jq -r .SUPABASE_URL dart_defines.json)
-          res=$(curl -sS -X POST "$url/functions/v1/places/search" -H "Content-Type: application/json" -d '{"query":"台北 牛肉麵"}')
+          # 用帶時間的查詢字串避開快取，確定真的問到 Google（驗證金鑰可用）
+          res=$(curl -sS -D /tmp/sh -X POST "$url/functions/v1/places/search" -H "Content-Type: application/json" -d "{\"query\":\"牛肉麵 台北 $(date +%m%d%H%M)\"}")
           echo "$res" | jq -c '{n: (.places | length), first: .places[0].displayName.text, error}'
+          grep -i "x-cache" /tmp/sh || true
           echo "==> 今日用量（前 8 名，主體已遮蔽）"
           sql "select regexp_replace(subject, '^(user|ip):[^:]*', '\\1:***') as who, count from public.api_usage where day = current_date order by count desc limit 8;" | jq -c '.[]' || true
           echo "==> 驗證照片"
