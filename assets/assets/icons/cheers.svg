@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 兩杯紅酒乾杯：適合約會 -->
+  <defs>
+    <g id="glass">
+      <path d="M-8 -50 L-8 -38 C-8 -28 -4 -24 0 -24 C4 -24 8 -28 8 -38 L8 -50 Z" fill="#FCE4EC" stroke="#8E1B3D" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M-7.9 -38 C-7.5 -29 -3.5 -25.6 0 -25.6 C3.5 -25.6 7.5 -29 7.9 -38 Z" fill="#C2185B"/>
+      <path d="M0 -24 L0 -7" stroke="#8E1B3D" stroke-width="3" stroke-linecap="round"/>
+      <path d="M-8 -5 L8 -5" stroke="#8E1B3D" stroke-width="3.5" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <g transform="translate(17 61) rotate(11)"><use href="#glass"/></g>
+  <g transform="translate(47 61) rotate(-11)"><use href="#glass"/></g>
+  <!-- 碰杯的火花 -->
+  <g stroke="#F9A825" stroke-width="2.6" stroke-linecap="round">
+    <path d="M32 2 L32 8"/>
+    <path d="M24.5 5 L27.5 9.5"/>
+    <path d="M39.5 5 L36.5 9.5"/>
+  </g>
+</svg>

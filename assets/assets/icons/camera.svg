@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 相機機身 -->
+  <rect x="6" y="18" width="52" height="36" rx="7" fill="#EC407A" stroke="#AD1457" stroke-width="3"/>
+  <!-- 上方突起與快門 -->
+  <path d="M22 18 L26 10 L38 10 L42 18 Z" fill="#EC407A" stroke="#AD1457" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="46" y="12" width="8" height="6" rx="1.5" fill="#AD1457"/>
+  <!-- 鏡頭 -->
+  <circle cx="32" cy="36" r="12" fill="#FFFFFF" stroke="#AD1457" stroke-width="3"/>
+  <circle cx="32" cy="36" r="7" fill="#37474F"/>
+  <circle cx="32" cy="36" r="3.5" fill="#546E7A"/>
+  <circle cx="29.5" cy="33.5" r="1.6" fill="#FFFFFF"/>
+  <!-- 閃光燈 -->
+  <circle cx="14" cy="26" r="2.6" fill="#FFF3B0" stroke="#AD1457" stroke-width="1.5"/>
+</svg>

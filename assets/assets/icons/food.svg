@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 叉子 -->
+  <path d="M18 6 v16 a6 6 0 0 0 12 0 V6" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="24" y1="6" x2="24" y2="22" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+  <line x1="24" y1="28" x2="24" y2="58" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+  <!-- 刀子 -->
+  <path d="M46 6 c-8 6 -8 20 0 26 v26" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
