@@ -20,16 +20,18 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 // - 搜尋／地圖列店家：個人不限，改用「全站總量」保護帳單，另有每 IP 防機器人上限
 const LIMITS: Record<string, [number, number]> = {
   details: [100, 500],
-  photo: [3000, 10000],
+  photo: [1500, 5000],
 };
-const GLOBAL_LIMITS: Record<string, number> = { search: 300, nearby: 1000 };
-const IP_LIMITS: Record<string, number> = { search: 2000, nearby: 2000 };
+// 全站每日總量：設在 Google 每月免費額度（每種 5,000 次）之內 → 不管幾千人用，API 帳單都是 0
+// 150 × 30 天 = 4,500 < 5,000。人多到常常撞到上限時再考慮放寬（那時才會開始有費用）。
+const GLOBAL_LIMITS: Record<string, number> = { search: 150, nearby: 150, details: 150, photo: 150 };
+const IP_LIMITS: Record<string, number> = { search: 2000, nearby: 2000, details: 500, photo: 3000 };
 const LOGIN_REQUIRED = new Set<string>();
 const UPGRADE_HINT: Record<string, string> = {
   search: "今天全站看地圖與搜尋的次數已達上限，明天再試（有評價的店還是看得到）",
-  details: "今日查詢次數已達上限，明天再試",
+  details: "今天全站查看店家的次數已達上限，明天再試",
   nearby: "今天全站查看地圖店家的次數已達上限，明天再試（有評價的店還是看得到）",
-  photo: "今日照片瀏覽次數已達上限，明天再試",
+  photo: "今天全站照片瀏覽次數已達上限，明天再試",
 };
 const TTL_SEARCH_MS = 7 * 24 * 3600 * 1000;
 const TTL_DETAILS_MS = 30 * 24 * 3600 * 1000;
@@ -93,7 +95,7 @@ async function gate(req: Request, feature: string): Promise<Response | null> {
     if (ipOk === false) return fail("這個網路今天的查詢次數過多，明天再試", 429);
     const { data: allOk } = await admin.rpc("bump_usage", { p_subject: `global:${feature}`, p_limit: GLOBAL_LIMITS[feature] });
     if (allOk === false) return fail(UPGRADE_HINT[feature], 429);
-    return null;
+    if (!(feature in LIMITS)) return null;
   }
   const limit = LIMITS[feature][caller.plan === "pro" ? 1 : 0];
   const { data: allowed } = await admin.rpc("bump_usage", { p_subject: `${caller.subject}:${feature}`, p_limit: limit });
