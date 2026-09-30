@@ -68,6 +68,7 @@ class ReviewRepository {
   // ---------------------------------------------------------------- places
 
   /// 把 Google 店家基本資料寫進快取（評價需要以 place_id 為外鍵）。
+  /// 只在店家還沒有資料時建立；已存在的由後端在查詳細資料時刷新（一般使用者不能改）。
   Future<void> cachePlace(Place p) => _db.from('places').upsert({
         'place_id': p.id,
         'name': p.name,
@@ -78,7 +79,7 @@ class ReviewRepository {
         'types': p.types,
         'google_maps_uri': p.googleMapsUri,
         'cached_at': DateTime.now().toUtc().toIso8601String(),
-      });
+      }, ignoreDuplicates: true);
 
   Future<PlaceStats> stats(String placeId) async {
     final row = await _db

@@ -103,6 +103,26 @@ async function gate(req: Request, feature: string): Promise<Response | null> {
   return null;
 }
 
+// 用 Google 的最新資料刷新 places 那一列（一般使用者只能新增、不能改，避免有人竄改店名地址）
+async function refreshPlaceRow(body: unknown) {
+  try {
+    const p = body as { id?: string; displayName?: { text?: string }; formattedAddress?: string;
+      location?: { latitude?: number; longitude?: number }; primaryType?: string; types?: string[]; googleMapsUri?: string };
+    if (!p.id || !p.displayName?.text) return;
+    await admin.from("places").upsert({
+      place_id: p.id,
+      name: p.displayName.text,
+      address: p.formattedAddress ?? "",
+      lat: p.location?.latitude ?? null,
+      lng: p.location?.longitude ?? null,
+      primary_type: p.primaryType ?? null,
+      types: p.types ?? [],
+      google_maps_uri: p.googleMapsUri ?? null,
+      cached_at: new Date().toISOString(),
+    });
+  } catch (_) { /* 刷新失敗不影響回應 */ }
+}
+
 async function cacheGet(key: string, ttlMs: number): Promise<unknown | null> {
   const { data } = await admin.from("places_cache").select("data, fetched_at").eq("cache_key", key).maybeSingle();
   if (!data) return null;
@@ -292,5 +312,6 @@ Deno.serve(async (req) => {
   const result = await run();
   if (!result.ok) return json(result.body, result.status);
   await cachePut(key, result.body);
+  if (sub === "details") await refreshPlaceRow(result.body);
   return json(result.body, 200, { "X-Cache": "MISS" });
 });

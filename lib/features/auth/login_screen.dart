@@ -167,10 +167,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                   decoration: const InputDecoration(
                     labelText: '密碼',
-                    helperText: '至少 6 個字',
+                    helperText: '至少 8 個字',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) => (v ?? '').length < 6 ? '密碼至少 6 個字' : null,
+                  validator: (v) => (v ?? '').length < (_signUp ? 8 : 6)
+                    ? '密碼至少 ${_signUp ? 8 : 6} 個字'
+                    : null,
                   onFieldSubmitted: (_) => _submit(),
                 ),
                 if (_signUp)
