@@ -61,7 +61,7 @@ jobs:
           curl -sS -X PATCH "https://api.supabase.com/v1/projects/$ref/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
             -d "{\"password_min_length\":8,\"password_hibp_enabled\":true,\"site_url\":\"$site\",\"uri_allow_list\":\"$site,${site}*\"}" \
-            | jq -c '{password_min_length, password_hibp_enabled, site_url, mailer_autoconfirm}' || true
+            | jq -c 'if type=="object" and has("password_min_length") then {password_min_length, password_hibp_enabled, site_url, uri_allow_list, mailer_autoconfirm} else . end' || true
           echo "==> 設定函式 secret"
           npx --yes supabase@latest secrets set --project-ref "$ref" GOOGLE_PLACES_API_KEY="$key"
           echo "==> 部署函式 places"
