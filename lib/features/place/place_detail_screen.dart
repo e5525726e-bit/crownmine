@@ -242,7 +242,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                     child: Text(
                       [
                         if (p.primaryTypeLabel != null) p.primaryTypeLabel!,
-                        if (p.priceLabel != null) p.priceLabel!,
                         if (p.isClosedPermanently) '已歇業',
                       ].join(' · '),
                       style: text.bodyMedium
@@ -258,19 +257,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                             p.googleMapsUri == null ? null : const Chevron(),
                         onTap: () => _open(p.googleMapsUri),
                       ),
-                      if (p.phone != null)
-                        ListTile(
-                          leading: const Icon(CupertinoIcons.phone_fill),
-                          title: Text(p.phone!),
-                          onTap: () => _open('tel:${p.phone}'),
-                        ),
-                      if (p.website != null)
-                        ListTile(
-                          leading: const Icon(CupertinoIcons.globe),
-                          title: Text(p.website!,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                          onTap: () => _open(p.website),
-                        ),
                       if (p.weekdayDescriptions.isNotEmpty)
                         ExpansionTile(
                           leading: const Icon(CupertinoIcons.clock_fill),
