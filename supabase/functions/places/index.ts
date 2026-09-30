@@ -38,9 +38,10 @@ const SEARCH_MASK = "places.id,places.displayName,places.formattedAddress,places
   "places.primaryType,places.primaryTypeDisplayName,places.photos,places.businessStatus," +
   "places.googleMapsUri";  // 不要 priceLevel：那會落到較貴的 Enterprise 計費
 const TEXT_MASK = SEARCH_MASK + ",nextPageToken";  // 只有文字搜尋有分頁
-// 店家頁只留地址與營業時間；不要電話、網站、價位（少要欄位、少花錢）
+// 店家頁只留地址（不要營業時間、電話、網站、價位：這些是 Google 較貴的計費等級，
+// 拿掉後店家頁每月免費額度從 1,000 次變 5,000 次）
 const DETAIL_MASK = "id,displayName,formattedAddress,location,types,primaryType,primaryTypeDisplayName," +
-  "photos,businessStatus,googleMapsUri,regularOpeningHours";
+  "photos,businessStatus,googleMapsUri";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

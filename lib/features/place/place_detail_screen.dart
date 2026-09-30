@@ -257,17 +257,6 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
                             p.googleMapsUri == null ? null : const Chevron(),
                         onTap: () => _open(p.googleMapsUri),
                       ),
-                      if (p.weekdayDescriptions.isNotEmpty)
-                        ExpansionTile(
-                          leading: const Icon(CupertinoIcons.clock_fill),
-                          title: const Text('營業時間'),
-                          children: [
-                            for (final line in p.weekdayDescriptions)
-                              ListTile(
-                                  dense: true,
-                                  title: Text(line, style: text.bodyMedium)),
-                          ],
-                        ),
                     ],
                   ),
                   const GoogleAttribution(),
